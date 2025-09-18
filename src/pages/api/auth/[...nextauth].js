@@ -27,9 +27,13 @@ export default NextAuth({
       return baseUrl + "/dashboard";
     },
 
-    async session({ session, token, user }) {
-      // Attach token info if needed
+    async session({ session, token }) {
+      // Define which email(s) should be admin
+      const adminEmails = ["sharmapankaj102030@gmail.com"]; // <-- replace with your email(s)
+
       session.user.id = token.sub;
+      session.user.role = adminEmails.includes(session.user.email) ? "admin" : "user";
+
       return session;
     },
   },

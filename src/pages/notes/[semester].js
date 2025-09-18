@@ -1,41 +1,57 @@
 import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
 import DashboardLayout from "../../components/DashboardLayout";
 
-export default function SemesterNotes() {
+export default function Semester() {
   const router = useRouter();
-  const { semester } = router.query;
+  const { semester } = router.query; // for example: "first"
 
-  const semesterNames = {
-    first: "First Semester",
-    second: "Second Semester",
-    third: "Third Semester",
-    fourth: "Fourth Semester",
-    fifth: "Fifth Semester",
-    sixth: "Sixth Semester",
-    seventh: "Seventh Semester",
-    eighth: "Eighth Semester",
-  };
+  const [notes, setNotes] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const semesterName = semesterNames[semester] || "Semester";
+  useEffect(() => {
+    if (!semester) return;
+
+    fetch(`/api/notes?semester=${semester}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) setNotes(data.data);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [semester]);
 
   return (
     <DashboardLayout>
-      <div className="flex items-center mb-6">
-        <button
-          onClick={() => router.push("/notes")}
-          className="px-4 py-2 bg-gray-700 rounded-lg hover:bg-teal-400 hover:text-gray-900 transition"
-        >
-          ← Back
-        </button>
-        <h1 className="text-3xl font-bold ml-4">{semesterName}</h1>
-      </div>
+      <button
+        onClick={() => router.back()}
+        className="mb-4 bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg"
+      >
+        ⬅ Back
+      </button>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-gradient-to-br from-gray-800 via-gray-900 to-gray-800 p-6 rounded-xl shadow-lg">
-          <h2 className="text-xl font-semibold mb-2 text-teal-400">{semesterName} Notes</h2>
-          <p className="text-gray-400">All notes for {semesterName} will appear here. You can replace this with real content.</p>
+      <h1 className="text-3xl font-bold mb-6 capitalize">
+        {semester?.toLowerCase()} Semester Notes
+      </h1>
+
+      {loading ? (
+        <p>Loading notes...</p>
+      ) : notes.length === 0 ? (
+        <p>No notes found for this semester.</p>
+      ) : (
+        <div className="space-y-4">
+          {notes.map((note) => (
+            <div
+              key={note._id}
+              className="p-4 bg-gray-800 rounded-lg shadow-lg cursor-pointer hover:bg-gray-700 transition"
+              onClick={() => router.push(`/notes/${semester}/${note._id}`)}
+            >
+              <h2 className="text-lg font-semibold text-white">{note.title}</h2>
+              {note.subject && <p className="text-gray-400 text-sm">{note.subject}</p>}
+            </div>
+          ))}
         </div>
-      </div>
+      )}
     </DashboardLayout>
   );
 }

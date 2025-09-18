@@ -17,6 +17,15 @@ export default function DashboardLayout({ children }) {
     { icon: "🔗", label: "Share", path: "/share" },
   ];
 
+  // Add admin tab dynamically
+  const adminEmails = ["sharmapankaj102030@gmail.com"]; // list of admin emails
+  if (session?.user?.email && adminEmails.includes(session.user.email)) {
+    sidebarItems.push({
+      icon: "📝",
+      label: "Approvals",
+      path: "/admin/approvals",
+    });
+  }
   // Active tab based on current URL
   const activeTab = sidebarItems.findIndex(item => {
   if (item.path === "/notes") {
