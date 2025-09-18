@@ -1,8 +1,10 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+import {connectMongo} from "../../../lib/mongodb";
+import User from "../../../models/User";
 
 export default NextAuth({
-  // Configure authentication providers
+  // Providers
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
@@ -10,29 +12,60 @@ export default NextAuth({
     }),
   ],
 
-  // Custom pages (optional)
+  // Custom login page
   pages: {
-    signIn: "/login", // your custom login page
+    signIn: "/login",
   },
 
-  // Session settings
+  // Session strategy
   session: {
     strategy: "jwt",
   },
 
-  // Callbacks
   callbacks: {
-    async redirect({ url, baseUrl }) {
-      // Always redirect to /dashboard after login
+    async redirect({ baseUrl }) {
       return baseUrl + "/dashboard";
     },
 
-    async session({ session, token }) {
-      // Define which email(s) should be admin
-      const adminEmails = ["sharmapankaj102030@gmail.com"]; // <-- replace with your email(s)
+    async jwt({ token, account, profile }) {
+      // When user signs in for the first time
+      if (account && profile) {
+        await connectMongo();
 
-      session.user.id = token.sub;
-      session.user.role = adminEmails.includes(session.user.email) ? "admin" : "user";
+        let user = await User.findOne({ email: profile.email });
+
+        if (!user) {
+          user = await User.create({
+            name: profile.name,
+            email: profile.email,
+            image: profile.picture,
+          });
+        }
+
+        token.userId = user._id.toString();
+      }
+      return token;
+    },
+
+    async session({ session, token }) {
+      await connectMongo();
+
+      // Get user from DB
+      const user = await User.findOne({ email: session.user.email });
+
+      if (user) {
+        session.user.id = user._id.toString();
+
+        // Role
+        const adminEmails = ["sharmapankaj102030@gmail.com"]; // add more if needed
+        session.user.role = adminEmails.includes(user.email) ? "admin" : "user";
+
+        // Extra fields
+        session.user.semester = user.semester || "";
+        session.user.college = user.college || "";
+        session.user.address = user.address || "";
+        session.user.phone = user.phone || "";
+      }
 
       return session;
     },
