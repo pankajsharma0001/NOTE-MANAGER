@@ -17,8 +17,8 @@ export default function DashboardLayout({ children }) {
     { icon: "🔗", label: "Share", path: "/share" },
   ];
 
-  // Add admin tab dynamically
-  const adminEmails = ["sharmapankaj102030@gmail.com"]; // list of admin emails
+  // Admin only
+  const adminEmails = ["sharmapankaj102030@gmail.com"];
   if (session?.user?.email && adminEmails.includes(session.user.email)) {
     sidebarItems.push({
       icon: "📝",
@@ -26,14 +26,14 @@ export default function DashboardLayout({ children }) {
       path: "/admin/approvals",
     });
   }
-  // Active tab based on current URL
-  const activeTab = sidebarItems.findIndex(item => {
-  if (item.path === "/notes") {
-    // Highlight Notes for both /notes and any /notes/[semester]
-    return router.asPath.startsWith("/notes");
-  }
-  return router.asPath.startsWith(item.path);
-});
+
+  // Detect current active tab
+  const activeTab = sidebarItems.findIndex((item) => {
+    if (item.path === "/notes") {
+      return router.asPath.startsWith("/notes");
+    }
+    return router.asPath === item.path;
+  });
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
@@ -57,10 +57,12 @@ export default function DashboardLayout({ children }) {
         {sidebarItems.map((item, index) => (
           <div key={index} className="relative w-full flex flex-col items-center">
             <button
-              className={`p-3 rounded-lg hover:bg-gray-800 transition relative z-10`}
+              className="p-3 rounded-lg hover:bg-gray-800 transition relative z-10"
               onClick={() => router.push(item.path)}
             >
-              <span role="img" aria-label={item.label}>{item.icon}</span>
+              <span role="img" aria-label={item.label}>
+                {item.icon}
+              </span>
             </button>
             <span className="text-xs mt-1">{item.label}</span>
 
@@ -72,13 +74,16 @@ export default function DashboardLayout({ children }) {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-8">
+      <main className="flex-1 p-8" key={router.asPath}>
         {/* Header */}
         <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
           <div>
             <h2 className="text-gray-400 text-lg">Good Afternoon ☕</h2>
             <h1 className="text-3xl font-bold">
-              Welcome, <span className="text-teal-400">{session.user.name.toUpperCase()}</span>
+              Welcome,{" "}
+              <span className="text-teal-400">
+                {session.user.name?.toUpperCase()}
+              </span>
             </h1>
           </div>
 

@@ -77,6 +77,9 @@ export default function Dashboard() {
                   setActiveTab(index);
                   if (item.label === "Home") router.push("/dashboard");
                   else if (item.label === "Notes") router.push("/notes");
+                  else if (item.label === "Favorites") router.push("/favorites");
+                  else if (item.label === "Syllabus") router.push("/syllabus");
+                  else if (item.label === "Share") router.push("/share");
                 }}
               >
                 <span role="img" aria-label={item.label}>{item.icon}</span>
