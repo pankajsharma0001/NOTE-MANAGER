@@ -23,13 +23,32 @@ export default function SharePage() {
     8: "eighth",
   };
 
-  const handleChange = (e) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+  // Placeholder for subjects by semester
+  const subjectsBySemester = {
+    1: ["Applied Chemistry", "Applied Physics", "Calculus I", "Communication Techniques", "Computer Programming", "Engineering Drawing"], // fill your subjects
+    2: ["Algebra & Geometry", "Applied Mechanics", "Basic Electrical and Electronics Engineering", "Civil Engineering Materials", "Civil Engineering Workshop", "Engineering Geology", "Introduction to Energy Engineering"],
+    3: ["Building Technology", "Calculus II", "Fluid Mechanics", "Numerical Methods", "Strength of Materials", "Surveying I"],
+    4: ["Engineering Economics", "Hydraulics", "Probability and Statistics", "", "Soil Mechanics", "Structural Analysis I", "Surveying II"],
+    5: ["Engineering Hydrology", "Design of Steel and Timber Structure", "Foundation Engineering", "Structural Analysis II", "Transportation Engineering I", "Water Supply Engineering"],
+    6: ["Civil Engineering Project I", "Concrete Technology & Masonry Structure", "Estimation and Valuation", "Elective I", "Irrigation and Dranage Engineering", "Sanitary Engineering", "Survery Field Project", "Transportation Engineering II"],
+    7: ["Civil Engineering Project II", "Construction Project Management", "Design of R.C.C. Structure", "Elective II", "Engineering Professional Practice", "Hydropower Engineering"],
+    8: ["Elective III", "Internship"],
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
+
+    // Reset subject if semester changes
+    if (name === "semester") {
+      setForm((prev) => ({ ...prev, subject: "" }));
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!form.semester || !file) {
+    if (!form.semester || !form.subject || !file) {
       setMessage("❌ Please fill all required fields and choose a file.");
       return;
     }
@@ -57,7 +76,7 @@ export default function SharePage() {
         >
           <h1 className="text-2xl font-bold text-center">Share a Note</h1>
 
-          {/* Title + Subject */}
+          {/* Row 1: Title + Semester */}
           <div className="grid grid-cols-2 gap-4">
             <input
               type="text"
@@ -67,18 +86,7 @@ export default function SharePage() {
               onChange={handleChange}
               required
             />
-            <input
-              type="text"
-              name="subject"
-              placeholder="Subject"
-              className="p-2 rounded bg-gray-700 w-full"
-              onChange={handleChange}
-              required
-            />
-          </div>
 
-          {/* Semester + Description */}
-          <div className="grid grid-cols-2 gap-4">
             <select
               name="semester"
               className="p-2 rounded bg-gray-700 w-full"
@@ -91,6 +99,30 @@ export default function SharePage() {
                   {i + 1} Semester
                 </option>
               ))}
+            </select>
+          </div>
+
+          {/* Row 2: Subject + Description */}
+          <div className="grid grid-cols-2 gap-4">
+            <select
+              name="subject"
+              className={`p-2 rounded bg-gray-700 w-full ${
+                !form.semester ? "bg-gray-600 cursor-not-allowed" : ""
+              }`}
+              onChange={handleChange}
+              value={form.subject}
+              disabled={!form.semester}
+              required
+            >
+              <option value="">
+                {form.semester ? "Select Subject" : "Select Semester first"}
+              </option>
+              {form.semester &&
+                subjectsBySemester[form.semester].map((subj, idx) => (
+                  <option key={idx} value={subj}>
+                    {subj}
+                  </option>
+                ))}
             </select>
 
             <textarea

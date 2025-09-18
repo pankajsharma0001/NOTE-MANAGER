@@ -6,10 +6,18 @@ export default async function handler(req, res) {
 
   if (req.method === "GET") {
     try {
-      const { semester } = req.query;
-      if (!semester) return res.status(400).json({ success: false, message: "Semester required" });
+      const { semester, subject } = req.query;
+      if (!semester) {
+        return res.status(400).json({ success: false, message: "Semester required" });
+      }
 
-      const notes = await Note.find({ semester: semester.toLowerCase().trim() }).sort({ createdAt: -1 });
+      // Build filter object
+      let filter = { semester: semester.toLowerCase().trim() };
+      if (subject) {
+        filter.subject = subject.trim(); // filter by selected subject
+      }
+
+      const notes = await Note.find(filter).sort({ createdAt: -1 });
 
       return res.status(200).json({ success: true, data: notes });
     } catch (error) {
