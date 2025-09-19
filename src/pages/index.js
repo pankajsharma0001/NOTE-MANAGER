@@ -1,6 +1,7 @@
 import { useSession, signOut } from "next-auth/react";
 import { useEffect } from "react";
 import { useRouter } from "next/router";
+import Image from "next/image";
 
 export default function Home() {
   const { data: session, status } = useSession();
@@ -21,7 +22,7 @@ export default function Home() {
       <h1 className="text-2xl font-bold mb-4">
         Hello, {session.user.name} 👋
       </h1>
-      <img
+      <Image
         src={session.user.image}
         alt="User Avatar"
         className="w-20 h-20 rounded-full shadow-md mb-4"

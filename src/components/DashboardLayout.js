@@ -2,6 +2,7 @@
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/router";
 import { useState, useRef, useEffect } from "react";
+import Image from "next/image";
 
 export default function DashboardLayout({ children }) {
   const { data: session, status } = useSession();
@@ -89,7 +90,7 @@ export default function DashboardLayout({ children }) {
 
           {/* Profile Dropdown */}
           <div className="relative mt-4 sm:mt-0" ref={dropdownRef}>
-            <img
+            <Image
               src={session.user.image}
               alt="Profile"
               className="w-12 h-12 rounded-full ring-2 ring-teal-400 cursor-pointer"

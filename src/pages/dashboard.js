@@ -2,6 +2,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/router";
 import Profile from "./profile"; // import the Profile component
+import Image from "next/image";
 
 export default function Dashboard() {
   const { data: session, status, update } = useSession();
@@ -99,13 +100,13 @@ export default function Dashboard() {
             <div>
               <h2 className="text-gray-400 text-lg">Good Afternoon ☕</h2>
               <h1 className="text-3xl font-bold">
-                Let's start learning, <span className="text-teal-400">{session.user.name.toUpperCase()}</span>
+                Let&apos;s start learning, <span className="text-teal-400">{session.user.name.toUpperCase()}</span>
               </h1>
             </div>
 
             {/* Profile Dropdown */}
             <div className="relative mt-4 sm:mt-0" ref={dropdownRef}>
-              <img
+              <Image
                 src={session.user.image}
                 alt="Profile"
                 className="w-12 h-12 rounded-full ring-2 ring-teal-400 cursor-pointer"
@@ -158,7 +159,7 @@ export default function Dashboard() {
 
           {/* Notes Section */}
           <section className="mb-8">
-            <h3 className="text-gray-400 mb-2">You're reading in the <strong>Communication English</strong> notes</h3>
+            <h3 className="text-gray-400 mb-2">You&apos;re reading in the <strong>Communication English</strong> notes</h3>
             {notes.map((note) => (
               <div key={note.id} className="bg-gray-800 p-4 rounded-xl shadow mb-4 flex justify-between items-center hover:scale-105 transform transition">
                 <div>

@@ -1,6 +1,7 @@
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/router";
 import { useState, useEffect } from "react";
+import Image from "next/image";
 
 export default function Profile({ embedded = false, onComplete }) {
   const { data: session, status, update } = useSession();
@@ -136,7 +137,7 @@ export default function Profile({ embedded = false, onComplete }) {
 
       <div className={`${embedded ? "" : "max-w-3xl mx-auto"} bg-gray-800 p-8 rounded-xl shadow-lg`}>
         <div className="flex flex-col sm:flex-row items-center sm:items-start mb-6">
-          <img
+          <Image
             src={session.user.image}
             alt="Profile"
             className="w-24 h-24 rounded-full ring-2 ring-teal-400 mb-4 sm:mb-0 sm:mr-6"

@@ -1,5 +1,6 @@
 import { signIn } from "next-auth/react";
 import { useEffect, useRef } from "react";
+import Image from "next/image";
 
 export default function Login() {
   const particleCount = 15;
@@ -55,7 +56,7 @@ export default function Login() {
 
       {/* Glassmorphic card */}
       <div className="relative z-10 bg-white/30 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl p-10 w-full max-w-sm text-center animate-card-fade">
-        <img
+        <Image
           src="/note-icon.jpg"
           alt="Notes"
           className="w-20 h-20 mx-auto mb-4"
@@ -71,7 +72,7 @@ export default function Login() {
           onClick={() => signIn("google")}
           className="flex items-center justify-center gap-3 w-full py-3 px-5 bg-white hover:bg-gray-100 text-gray-800 font-semibold rounded-xl shadow-lg transition-transform transform hover:scale-105 hover:shadow-2xl animate-bounce-slow"
         >
-          <img
+          <Image
             src="https://www.svgrepo.com/show/355037/google.svg"
             alt="Google"
             className="w-6 h-6"
