@@ -7,9 +7,9 @@ const subjectsBySemester = {
   first: ["Applied Chemistry", "Applied Physics", "Calculus I", "Communication Techniques", "Computer Programming", "Engineering Drawing"],
   second: ["Algebra & Geometry", "Applied Mechanics", "Basic Electrical and Electronics Engineering", "Civil Engineering Materials", "Civil Engineering Workshop", "Engineering Geology", "Introduction to Energy Engineering"],
   third: ["Building Technology", "Calculus II", "Fluid Mechanics", "Numerical Methods", "Strength of Materials", "Surveying I"],
-  fourth: ["Engineering Economics", "Hydraulics", "Probability and Statistics", "", "Soil Mechanics", "Structural Analysis I", "Surveying II"],
+  fourth: ["Engineering Economics", "Hydraulics", "Probability and Statistics", "Soil Mechanics", "Structural Analysis I", "Surveying II"],
   fifth: ["Engineering Hydrology", "Design of Steel and Timber Structure", "Foundation Engineering", "Structural Analysis II", "Transportation Engineering I", "Water Supply Engineering"],
-  sixth: ["Civil Engineering Project I", "Concrete Technology & Masonry Structure", "Estimation and Valuation", "Elective I", "Irrigation and Dranage Engineering", "Sanitary Engineering", "Survery Field Project", "Transportation Engineering II"],
+  sixth: ["Civil Engineering Project I", "Concrete Technology & Masonry Structure", "Estimation and Valuation", "Elective I", "Irrigation and Dranage Engineering", "Sanitary Engineering", "Survey Field Project", "Transportation Engineering II"],
   seventh: ["Civil Engineering Project II", "Construction Project Management", "Design of R.C.C. Structure", "Elective II", "Engineering Professional Practice", "Hydropower Engineering"],
   eighth: ["Elective III", "Internship"],
 };
@@ -21,6 +21,16 @@ export default function Semester() {
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedSubject, setSelectedSubject] = useState("");
+  const [userFavorites, setUserFavorites] = useState([]); // array of noteIds
+
+  // Fetch user favorites from API
+  useEffect(() => {
+    fetch("/api/favorites/get")
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) setUserFavorites(data.favorites.map(f => f.noteId));
+      });
+  }, []);
 
   // Select first subject by default
   useEffect(() => {
@@ -35,14 +45,31 @@ export default function Semester() {
 
     setLoading(true);
     fetch(`/api/notes?semester=${semester}&subject=${encodeURIComponent(selectedSubject)}`)
-      .then((res) => res.json())
-      .then((data) => {
+      .then(res => res.json())
+      .then(data => {
         if (data.success) setNotes(data.data);
         else setNotes([]);
         setLoading(false);
       })
       .catch(() => setLoading(false));
   }, [semester, selectedSubject]);
+
+  // Toggle favorite
+  const toggleFavorite = async (noteId) => {
+    const res = await fetch("/api/favorites/toggle", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ noteId, semester }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      if (userFavorites.includes(noteId)) {
+        setUserFavorites(userFavorites.filter(id => id !== noteId));
+      } else {
+        setUserFavorites([...userFavorites, noteId]);
+      }
+    }
+  };
 
   if (!semester) return <p>Loading...</p>;
 
@@ -60,7 +87,7 @@ export default function Semester() {
       <div className="flex space-x-4">
         {/* Sidebar: Subjects */}
         <div className="w-48 bg-gray-900 p-4 rounded-lg flex flex-col space-y-2 overflow-y-auto max-h-[80vh] sticky top-20">
-          {subjectsBySemester[semester]?.map((subject) => (
+          {subjectsBySemester[semester]?.map(subject => (
             <button
               key={subject}
               className={`px-4 py-2 rounded text-left transition-all duration-300 transform ${
@@ -82,16 +109,33 @@ export default function Semester() {
           ) : notes.length === 0 ? (
             <p className="col-span-full">No notes found for this subject.</p>
           ) : (
-            notes.map((note) => (
-              <div
-                key={note._id}
-                className="p-4 bg-gray-800 rounded-lg shadow-lg cursor-pointer hover:bg-gray-700 transition"
-                onClick={() => router.push(`/notes/${semester}/${note._id}`)}
-              >
-                <h2 className="text-lg font-semibold text-white">{note.title}</h2>
-                {note.subject && <p className="text-gray-400 text-sm">{note.subject}</p>}
-              </div>
-            ))
+            notes.map(note => {
+              const isFav = userFavorites.includes(note._id);
+              return (
+                <div
+                  key={note._id}
+                  className="p-4 bg-gray-800 rounded-lg shadow-lg transition relative"
+                >
+                  <button
+                    onClick={() => toggleFavorite(note._id)}
+                    className={`absolute top-2 right-2 text-xl ${
+                      isFav
+                        ? "text-yellow-400"
+                        : "text-gray-400 hover:text-yellow-300"
+                    }`}
+                  >
+                    {isFav ? "★" : "☆"} {/* Filled star if favorite, cross if not */}
+                  </button>
+                  <div
+                    className="cursor-pointer"
+                    onClick={() => router.push(`/notes/${semester}/${note._id}`)}
+                  >
+                    <h2 className="text-lg font-semibold text-white">{note.title}</h2>
+                    {note.subject && <p className="text-gray-400 text-sm">{note.subject}</p>}
+                  </div>
+                </div>
+              );
+            })
           )}
         </div>
       </div>

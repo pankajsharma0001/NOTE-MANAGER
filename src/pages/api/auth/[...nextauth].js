@@ -1,10 +1,10 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import {connectMongo} from "../../../lib/mongodb";
+import { connectMongo } from "../../../lib/mongodb";
 import User from "../../../models/User";
 
-export default NextAuth({
-  // Providers
+// 👇 export authOptions so getServerSession can use the SAME config
+export const authOptions = {
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
@@ -12,26 +12,21 @@ export default NextAuth({
     }),
   ],
 
-  // Custom login page
   pages: {
     signIn: "/login",
   },
 
-  // Session strategy
   session: {
     strategy: "jwt",
   },
 
+  secret: process.env.NEXTAUTH_SECRET, // 🔑 must be set in .env.local
+
   callbacks: {
-    async redirect({ baseUrl }) {
-      return baseUrl + "/dashboard";
-    },
-
     async jwt({ token, account, profile }) {
-      // When user signs in for the first time
-      if (account && profile) {
-        await connectMongo();
+      await connectMongo();
 
+      if (account && profile) {
         let user = await User.findOne({ email: profile.email });
 
         if (!user) {
@@ -43,31 +38,40 @@ export default NextAuth({
         }
 
         token.userId = user._id.toString();
+        token.name = user.name;
+        token.email = user.email;
+        token.image = user.image;
+        token.role = ["sharmapankaj102030@gmail.com"].includes(user.email)
+          ? "admin"
+          : "user";
+        token.semester = user.semester || "";
+        token.college = user.college || "";
+        token.address = user.address || "";
+        token.phone = user.phone || "";
       }
+
       return token;
     },
 
     async session({ session, token }) {
-      await connectMongo();
-
-      // Get user from DB
-      const user = await User.findOne({ email: session.user.email });
-
-      if (user) {
-        session.user.id = user._id.toString();
-
-        // Role
-        const adminEmails = ["sharmapankaj102030@gmail.com"]; // add more if needed
-        session.user.role = adminEmails.includes(user.email) ? "admin" : "user";
-
-        // Extra fields
-        session.user.semester = user.semester || "";
-        session.user.college = user.college || "";
-        session.user.address = user.address || "";
-        session.user.phone = user.phone || "";
+      if (token) {
+        session.user.id = token.userId;
+        session.user.name = token.name;
+        session.user.email = token.email;
+        session.user.image = token.image;
+        session.user.role = token.role;
+        session.user.semester = token.semester;
+        session.user.college = token.college;
+        session.user.address = token.address;
+        session.user.phone = token.phone;
       }
-
       return session;
     },
+
+    async redirect({ baseUrl }) {
+      return baseUrl + "/dashboard";
+    },
   },
-});
+};
+
+export default NextAuth(authOptions);

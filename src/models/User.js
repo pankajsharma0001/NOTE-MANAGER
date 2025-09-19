@@ -1,16 +1,23 @@
 import mongoose from "mongoose";
 
-const UserSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  image: { type: String },
-  favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: "Note" }],
-  isAdmin: { type: Boolean, default: false },
-  semester: { type: String },
-  college: { type: String },
-  address: { type: String },
-  phone: { type: String },
-  profileComplete: { type: Boolean, default: false }
+const userSchema = new mongoose.Schema({
+  name: String,
+  email: { type: String, unique: true },
+  image: String,
+  semester: String,
+  college: String,
+  address: String,
+  phone: String,
+
+  // Favorites will store noteId + semester
+  favorites: [
+    {
+      noteId: { type: mongoose.Schema.Types.ObjectId, ref: "Note", required: true },
+      semester: { type: String, required: true },
+    },
+  ],
 });
 
-export default mongoose.models.User || mongoose.model("User", UserSchema);
+const User = mongoose.models.User || mongoose.model("User", userSchema);
+
+export default User;

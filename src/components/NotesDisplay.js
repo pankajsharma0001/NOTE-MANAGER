@@ -3,16 +3,16 @@ import DashboardLayout from "../components/DashboardLayout";
 
 // Placeholder for subjects by semester
 const subjectsBySemester = {
-  1: ["Math", "Physics", "Chemistry"],
-  2: ["English", "Biology", "History"],
-  3: ["Subject 3-1", "Subject 3-2"],
-  4: ["Subject 4-1", "Subject 4-2"],
-  5: ["Subject 5-1", "Subject 5-2"],
-  6: ["Subject 6-1", "Subject 6-2"],
-  7: ["Subject 7-1", "Subject 7-2"],
-  8: ["Subject 8-1", "Subject 8-2"],
+  1: ["Applied Chemistry", "Applied Physics", "Calculus I", "Communication Techniques", "Computer Programming", "Engineering Drawing"],
+  2: ["Algebra & Geometry", "Applied Mechanics", "Basic Electrical and Electronics Engineering", "Civil Engineering Materials", "Civil Engineering Workshop", "Engineering Geology", "Introduction to Energy Engineering"],
+  3: ["Building Technology", "Calculus II", "Fluid Mechanics", "Numerical Methods", "Strength of Materials", "Surveying I"],
+  4: ["Engineering Economics", "Hydraulics", "Probability and Statistics", "Soil Mechanics", "Structural Analysis I", "Surveying II"],
+  5: ["Engineering Hydrology", "Design of Steel and Timber Structure", "Foundation Engineering", "Structural Analysis II", "Transportation Engineering I", "Water Supply Engineering"],
+  6: ["Civil Engineering Project I", "Concrete Technology & Masonry Structure", "Estimation and Valuation", "Elective I", "Irrigation and Dranage Engineering", "Sanitary Engineering", "Survey Field Project", "Transportation Engineering II"],
+  7: ["Civil Engineering Project II", "Construction Project Management", "Design of R.C.C. Structure", "Elective II", "Engineering Professional Practice", "Hydropower Engineering"],
+  8: ["Elective III", "Internship"],
 };
-
+  
 export default function NotesDisplay({ semester }) {
   const [selectedSubject, setSelectedSubject] = useState("");
   const [notes, setNotes] = useState([]);

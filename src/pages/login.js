@@ -56,7 +56,7 @@ export default function Login() {
       {/* Glassmorphic card */}
       <div className="relative z-10 bg-white/30 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl p-10 w-full max-w-sm text-center animate-card-fade">
         <img
-          src="/note-icon.png"
+          src="/note-icon.jpg"
           alt="Notes"
           className="w-20 h-20 mx-auto mb-4"
         />
