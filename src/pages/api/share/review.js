@@ -1,4 +1,4 @@
-import connectMongo from "../../../lib/mongodb";
+import {connectMongo} from "../../../lib/mongodb";
 import Note from "../../../models/Note";
 
 export default async function handler(req, res) {
