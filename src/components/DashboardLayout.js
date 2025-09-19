@@ -95,6 +95,8 @@ export default function DashboardLayout({ children }) {
               alt="Profile"
               className="w-12 h-12 rounded-full ring-2 ring-teal-400 cursor-pointer"
               onClick={() => setDropdownOpen(!dropdownOpen)}
+              width={80}
+              height={80}
             />
             {dropdownOpen && (
               <div className="absolute right-0 mt-2 w-40 bg-gray-800 rounded-lg shadow-lg overflow-hidden z-50 animate-fadeIn">

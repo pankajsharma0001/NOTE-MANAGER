@@ -60,6 +60,8 @@ export default function Login() {
           src="/note-icon.jpg"
           alt="Notes"
           className="w-20 h-20 mx-auto mb-4"
+          width={80}
+          height={80}
         />
         <h1 className="text-3xl font-extrabold text-white drop-shadow-md">
           Note Manager
@@ -76,6 +78,8 @@ export default function Login() {
             src="https://www.svgrepo.com/show/355037/google.svg"
             alt="Google"
             className="w-6 h-6"
+            width={80}
+            height={80}
           />
           Sign in with Google
         </button>

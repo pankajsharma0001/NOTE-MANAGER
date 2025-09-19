@@ -26,6 +26,8 @@ export default function Home() {
         src={session.user.image}
         alt="User Avatar"
         className="w-20 h-20 rounded-full shadow-md mb-4"
+        width={80}
+        height={80}
       />
       <button
         onClick={() => signOut()}

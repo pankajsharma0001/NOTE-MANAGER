@@ -141,6 +141,8 @@ export default function Profile({ embedded = false, onComplete }) {
             src={session.user.image}
             alt="Profile"
             className="w-24 h-24 rounded-full ring-2 ring-teal-400 mb-4 sm:mb-0 sm:mr-6"
+            width={80}
+            height={80}
           />
 
           <div className="flex-1">
