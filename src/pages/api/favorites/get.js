@@ -13,8 +13,22 @@ export default async function handler(req, res) {
     return res.status(401).json({ success: false, message: "Not authenticated" });
 
   try {
-    const user = await User.findById(session.user.id).select("favorites");
-    return res.status(200).json({ success: true, favorites: user.favorites || [] });
+    const user = await User.findById(session.user.id)
+      .select("favorites")
+      .populate({
+        path: "favorites.noteId",      // populate the Note referenced
+        select: "subject bookName title", // only return the needed fields
+      });
+
+    // ✅ Map favorites to include subject & bookName directly
+    const favorites = user.favorites.map((fav) => ({
+      noteId: fav.noteId._id,
+      semester: fav.semester,
+      title: fav.noteId.title || fav.title, // prefer note title if present
+      subject: fav.noteId.subject,
+    }));
+
+    return res.status(200).json({ success: true, favorites });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
   }

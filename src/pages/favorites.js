@@ -33,6 +33,9 @@ export default function Favorites() {
     }
   };
 
+  const goToNote = (semester, noteId) => {
+    router.push(`/notes/${semester}/${noteId}`);
+  };
 
   return (
     <DashboardLayout>
@@ -48,19 +51,36 @@ export default function Favorites() {
             <div
               key={fav.noteId}
               className="relative bg-gradient-to-br from-gray-800 via-gray-900 to-gray-800 p-6 rounded-xl shadow-lg hover:scale-105 transition cursor-pointer"
+              onClick={() => goToNote(fav.semester, fav.noteId)}
             >
-              {/* Remove button at top-right */}
+              {/* Remove button */}
               <button
-                className="absolute top-2 right-2 text-red-500 text-2xl"
-                onClick={() => removeFavorite(fav.noteId, fav.semester)}
+                className="absolute top-2 right-2 text-red-500 text-2xl z-10"
+                onClick={(e) => {
+                  e.stopPropagation(); // prevent card click
+                  removeFavorite(fav.noteId, fav.semester);
+                }}
               >
                 ❌
               </button>
 
-              <h2 className="text-xl font-semibold mb-2 text-teal-400">{fav.title}</h2>
-              <p className="text-gray-400 mb-2">Semester: {fav.semester}</p>
-            </div>
+              {/* Title */}
+              <h2 className="text-xl font-semibold mb-2 text-teal-400">
+                {fav.title}
+              </h2>
 
+              {/* Semester */}
+              <p className="text-gray-400 mb-1">
+                Semester: {fav.semester}
+              </p>
+
+              {/* Subject */}
+              {fav.subject && (
+                <p className="text-gray-400 mb-1">
+                  Subject: {fav.subject}
+                </p>
+              )}
+            </div>
           ))}
         </div>
       )}

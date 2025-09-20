@@ -103,41 +103,44 @@ export default function Semester() {
         </div>
 
         {/* Notes Grid */}
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
           {loading ? (
             <p>Loading notes...</p>
           ) : notes.length === 0 ? (
-            <p className="col-span-full">No notes found for this subject.</p>
+            <p>No notes found for this subject.</p>
           ) : (
             notes.map(note => {
               const isFav = userFavorites.includes(note._id);
               return (
                 <div
-                  key={note._id}
-                  className="p-4 bg-gray-800 rounded-lg shadow-lg transition relative"
-                >
-                  <button
-                    onClick={() => toggleFavorite(note._id)}
-                    className={`absolute top-2 right-2 text-xl ${
-                      isFav
-                        ? "text-yellow-400"
-                        : "text-gray-400 hover:text-yellow-300"
-                    }`}
-                  >
-                    {isFav ? "★" : "☆"} {/* Filled star if favorite, cross if not */}
-                  </button>
-                  <div
-                    className="cursor-pointer"
-                    onClick={() => router.push(`/notes/${semester}/${note._id}`)}
-                  >
-                    <h2 className="text-lg font-semibold text-white">{note.title}</h2>
-                    {note.subject && <p className="text-gray-400 text-sm">{note.subject}</p>}
-                  </div>
-                </div>
-              );
-            })
-          )}
+          key={note._id}
+          className="relative bg-gradient-to-br from-gray-800 via-gray-900 to-gray-800 p-5 rounded-xl shadow-lg hover:scale-105 transition cursor-pointer h-[6.5rem] overflow-hidden"
+          onClick={() => router.push(`/notes/${semester}/${note._id}`)}
+        >
+          {/* Favorite toggle */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleFavorite(note._id);
+            }}
+            className={`absolute top-2 right-2 text-2xl z-10 ${
+              isFav ? "text-yellow-400" : "text-gray-400 hover:text-yellow-300"
+            }`}
+          >
+            {isFav ? "★" : "☆"}
+          </button>
+
+          <h2 className="text-lg font-semibold mb-1 text-teal-400 truncate">{note.title}</h2>
+          <p className="text-gray-400 text-sm truncate">Semester: {semester}</p>
+          {note.subject && <p className="text-gray-400 text-sm truncate">{note.subject}</p>}
         </div>
+
+      );
+    })
+  )}
+</div>
+
+
       </div>
     </DashboardLayout>
   );

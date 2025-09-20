@@ -3,7 +3,8 @@ import mongoose from "mongoose";
 const favoriteSchema = new mongoose.Schema({
   noteId: { type: mongoose.Schema.Types.ObjectId, ref: "Note", required: true },
   semester: { type: String, required: true },
-  title: { type: String },
+  title: { type: String },     // optional cached title
+  subject: { type: String },   // optional cached subject
 });
 
 const userSchema = new mongoose.Schema(

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import DashboardLayout from "../components/DashboardLayout";
 
 export default function SharePage() {
@@ -10,8 +10,9 @@ export default function SharePage() {
   });
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const descRef = useRef(null);
 
-  // Map numbers to semester strings
   const semesterMap = {
     1: "first",
     2: "second",
@@ -23,9 +24,8 @@ export default function SharePage() {
     8: "eighth",
   };
 
-  // Placeholder for subjects by semester
   const subjectsBySemester = {
-    1: ["Applied Chemistry", "Applied Physics", "Calculus I", "Communication Techniques", "Computer Programming", "Engineering Drawing"], // fill your subjects
+    1: ["Applied Chemistry", "Applied Physics", "Calculus I", "Communication Techniques", "Computer Programming", "Engineering Drawing"],
     2: ["Algebra & Geometry", "Applied Mechanics", "Basic Electrical and Electronics Engineering", "Civil Engineering Materials", "Civil Engineering Workshop", "Engineering Geology", "Introduction to Energy Engineering"],
     3: ["Building Technology", "Calculus II", "Fluid Mechanics", "Numerical Methods", "Strength of Materials", "Surveying I"],
     4: ["Engineering Economics", "Hydraulics", "Probability and Statistics", "", "Soil Mechanics", "Structural Analysis I", "Surveying II"],
@@ -39,9 +39,11 @@ export default function SharePage() {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
 
-    // Reset subject if semester changes
-    if (name === "semester") {
-      setForm((prev) => ({ ...prev, subject: "" }));
+    if (name === "semester") setForm((prev) => ({ ...prev, subject: "" }));
+
+    if (name === "description" && descRef.current) {
+      descRef.current.style.height = "auto";
+      descRef.current.style.height = descRef.current.scrollHeight + "px";
     }
   };
 
@@ -53,6 +55,8 @@ export default function SharePage() {
       return;
     }
 
+    setLoading(true);
+
     const formData = new FormData();
     Object.keys(form).forEach((key) => {
       if (key === "semester") formData.append(key, semesterMap[form[key]]);
@@ -60,36 +64,50 @@ export default function SharePage() {
     });
     formData.append("file", file);
 
-    const res = await fetch("/api/share/upload", { method: "POST", body: formData });
-    const data = await res.json();
+    try {
+      const res = await fetch("/api/share/upload", { method: "POST", body: formData });
+      const data = await res.json();
+      if (data.success) {
+        setMessage("✅ File submitted successfully!");
+        setForm({ title: "", subject: "", semester: "", description: "" });
+        setFile(null);
+        if (descRef.current) descRef.current.style.height = "2.5rem";
+      } else setMessage(`❌ Upload failed! ${data.error || ""}`);
+    } catch (err) {
+      setMessage(`❌ Upload failed! ${err.message}`);
+    }
 
-    if (data.success) setMessage("✅ File submitted successfully!");
-    else setMessage(`❌ Upload failed! ${data.error || ""}`);
+    setLoading(false);
   };
+
+  useEffect(() => {
+    if (descRef.current) descRef.current.style.height = "2.5rem";
+  }, []);
 
   return (
     <DashboardLayout>
-      <div className="min-h-screen flex justify-center items-center">
+      <div className="min-h-screen flex justify-center items-start pt-12 overflow-hidden">
         <form
           onSubmit={handleSubmit}
-          className="bg-gray-800 p-8 rounded-xl shadow-lg space-y-6 w-[600px]"
+          className="bg-gray-800 p-8 rounded-xl shadow-lg w-[600px] flex flex-col gap-4"
         >
           <h1 className="text-2xl font-bold text-center">Share a Note</h1>
 
-          {/* Row 1: Title + Semester */}
+          {/* Title + Semester */}
           <div className="grid grid-cols-2 gap-4">
             <input
               type="text"
               name="title"
               placeholder="Title"
-              className="p-2 rounded bg-gray-700 w-full"
+              className="p-2 rounded bg-gray-700 w-full h-10"
+              value={form.title}
               onChange={handleChange}
               required
             />
-
             <select
               name="semester"
-              className="p-2 rounded bg-gray-700 w-full"
+              className="p-2 rounded bg-gray-700 w-full h-10"
+              value={form.semester}
               onChange={handleChange}
               required
             >
@@ -102,15 +120,13 @@ export default function SharePage() {
             </select>
           </div>
 
-          {/* Row 2: Subject + Description */}
+          {/* Subject + Description */}
           <div className="grid grid-cols-2 gap-4">
             <select
               name="subject"
-              className={`p-2 rounded bg-gray-700 w-full ${
-                !form.semester ? "bg-gray-600 cursor-not-allowed" : ""
-              }`}
-              onChange={handleChange}
+              className={`p-2 rounded bg-gray-700 w-full h-10 ${!form.semester ? "bg-gray-600 cursor-not-allowed" : ""}`}
               value={form.subject}
+              onChange={handleChange}
               disabled={!form.semester}
               required
             >
@@ -126,36 +142,67 @@ export default function SharePage() {
             </select>
 
             <textarea
+              ref={descRef}
               name="description"
               placeholder="Description"
-              className="p-2 rounded bg-gray-700 w-full h-[40px]"
+              className="p-2 rounded bg-gray-700 w-full resize-none overflow-hidden transition-all duration-200"
+              style={{ minHeight: "2.5rem" }}
+              value={form.description}
               onChange={handleChange}
             />
           </div>
 
           {/* File Upload */}
-          <div>
-            <label className="block mb-2 text-sm text-gray-300">Upload File</label>
-            <input
-              type="file"
-              id="file"
-              className="hidden"
-              onChange={(e) => setFile(e.target.files[0])}
-              required
-            />
-            <label
-              htmlFor="file"
-              className="cursor-pointer px-4 py-2 bg-teal-500 text-gray-900 rounded hover:bg-teal-600 transition block text-center"
-            >
-              {file ? file.name : "Choose File"}
-            </label>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex-1 flex gap-2">
+              <input
+                type="file"
+                id="file"
+                className="hidden"
+                onChange={(e) => setFile(e.target.files[0])}
+                required
+              />
+              <label
+                htmlFor="file"
+                className={`cursor-pointer px-4 py-2 rounded text-center transition-transform duration-200 ${
+                  file ? "bg-teal-600 text-white scale-105" : "bg-teal-500 text-gray-900 hover:bg-teal-600"
+                }`}
+              >
+                {file ? file.name : "Choose File"}
+              </label>
+            </div>
+
+            {file && (
+              <button
+                type="button"
+                onClick={() => setFile(null)}
+                className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition"
+              >
+                Clear
+              </button>
+            )}
           </div>
 
+          {/* Submit */}
           <button
             type="submit"
-            className="w-full bg-teal-500 py-2 rounded-lg font-semibold hover:bg-teal-600 transition"
+            className={`w-full py-2 rounded-lg font-semibold flex items-center justify-center gap-2 transition ${
+              loading ? "bg-gray-500 cursor-not-allowed" : "bg-teal-500 hover:bg-teal-600"
+            }`}
+            disabled={loading}
           >
-            Submit
+            {loading && (
+              <svg
+                className="animate-spin h-5 w-5 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+              </svg>
+            )}
+            {loading ? "Uploading..." : "Submit"}
           </button>
 
           {message && <p className="mt-2 text-center">{message}</p>}
