@@ -154,7 +154,7 @@ export default function Dashboard() {
               </div>
               <p className="mb-1 text-gray-300">75% Completed</p>
               <p className="text-sm text-gray-400">Semester: First</p>
-              <p className="text-sm text-gray-400">College: Pulchowk Campus</p>
+              <p className="text-sm text-gray-400">College: Universal College</p>
               <p className="mt-2 text-sm text-gray-400">You have logged in 77 times.</p>
             </div>
           </div>
