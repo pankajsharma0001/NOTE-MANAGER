@@ -1,23 +1,21 @@
 // pages/api/share/upload.js
 import { createRouter } from "next-connect";
 import multer from "multer";
-import path from "path";
-import fs from "fs";
+import { v2 as cloudinary } from "cloudinary";
 import { connectMongo } from "../../../lib/mongodb";
 import PendingNote from "../../../models/PendingNote";
 
-// Ensure uploads folder exists
-const uploadDir = path.join(process.cwd(), "public/uploads");
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadDir),
-  filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname),
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_NAME,
+  api_key: process.env.CLOUDINARY_KEY,
+  api_secret: process.env.CLOUDINARY_SECRET,
 });
 
-const upload = multer({ storage });
+const upload = multer({ storage: multer.memoryStorage() });
 
 const router = createRouter();
+
 router.use(upload.single("file"));
 
 router.post(async (req, res) => {
@@ -30,12 +28,26 @@ router.post(async (req, res) => {
   }
 
   try {
+    const streamUpload = () =>
+      new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { resource_type: "auto" },
+          (error, result) => {
+            if (result) resolve(result);
+            else reject(error);
+          }
+        );
+        stream.end(req.file.buffer);
+      });
+
+    const result = await streamUpload();
+
     const newPendingNote = await PendingNote.create({
       title,
       subject,
       semester,
       description,
-      fileUrl: `/uploads/${req.file.filename}`,
+      fileUrl: result.secure_url,
       uploadedBy: userId || null,
     });
 
@@ -45,11 +57,11 @@ router.post(async (req, res) => {
   }
 });
 
+export const config = { api: { bodyParser: false } };
+
 export default router.handler({
   onError: (err, req, res) =>
     res.status(500).json({ error: `Something went wrong: ${err.message}` }),
   onNoMatch: (req, res) =>
     res.status(405).json({ error: `Method '${req.method}' Not Allowed` }),
 });
-
-export const config = { api: { bodyParser: false } };

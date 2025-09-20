@@ -27,10 +27,12 @@ export default function Favorites() {
     });
     const data = await res.json();
     if (data.success) {
-      // Update local state immediately
-      setFavorites(favorites.filter((fav) => fav.noteId !== noteId));
+      setFavorites((prev) =>
+        prev.filter((fav) => !(fav.noteId === noteId && fav.semester === semester))
+      );
     }
   };
+
 
   return (
     <DashboardLayout>
