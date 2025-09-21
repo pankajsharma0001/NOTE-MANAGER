@@ -5,8 +5,8 @@ const NoteSchema = new mongoose.Schema({
   subject: { type: String },
   semester: { type: String }, // e.g., "first", "second"
   content: { type: String },
-  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  createdAt: { type: Date, default: Date.now },
+  uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  uploadedAt: { type: Date, default: Date.now },
   fileUrl: { type: String }, // 📂 URL for uploaded file (PDF, image, etc.)
 });
 

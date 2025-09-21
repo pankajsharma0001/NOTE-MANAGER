@@ -9,7 +9,7 @@ export default async function handler(req, res) {
   if (req.method === "GET") {
     try {
       const pendingNotes = await PendingNote.find({ status: "pending" })
-        .populate("uploadedBy", "email name") // get uploader info
+        .populate("uploadedBy", "email name image semester college address phone") // get uploader info
         .sort({ uploadedAt: -1 });
 
       return res.status(200).json({ success: true, data: pendingNotes });

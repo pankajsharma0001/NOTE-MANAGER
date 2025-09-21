@@ -23,7 +23,7 @@ export default function Semester() {
   const [selectedSubject, setSelectedSubject] = useState("");
   const [userFavorites, setUserFavorites] = useState([]); // array of noteIds
 
-  // Fetch user favorites from API
+  // Fetch user favorites
   useEffect(() => {
     fetch("/api/favorites/get")
       .then(res => res.json())
@@ -54,7 +54,6 @@ export default function Semester() {
       .catch(() => setLoading(false));
   }, [semester, selectedSubject]);
 
-  // Toggle favorite
   const toggleFavorite = async (noteId) => {
     const res = await fetch("/api/favorites/toggle", {
       method: "POST",
@@ -75,72 +74,77 @@ export default function Semester() {
 
   return (
     <DashboardLayout>
-      <button
-        onClick={() => router.back()}
-        className="mb-4 bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg"
-      >
-        ⬅ Back
-      </button>
-
-      <h1 className="text-3xl font-bold mb-6 capitalize">{semester} Semester Notes</h1>
-
-      <div className="flex space-x-4">
-        {/* Sidebar: Subjects */}
-        <div className="w-48 bg-gray-900 p-4 rounded-lg flex flex-col space-y-2 overflow-y-auto max-h-[80vh] sticky top-20">
-          {subjectsBySemester[semester]?.map(subject => (
-            <button
-              key={subject}
-              className={`px-4 py-2 rounded text-left transition-all duration-300 transform ${
-                selectedSubject === subject
-                  ? "bg-teal-500 text-white shadow-lg scale-105"
-                  : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-              }`}
-              onClick={() => setSelectedSubject(subject)}
-            >
-              {subject}
-            </button>
-          ))}
-        </div>
-
-        {/* Notes Grid */}
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
-          {loading ? (
-            <p>Loading notes...</p>
-          ) : notes.length === 0 ? (
-            <p>No notes found for this subject.</p>
-          ) : (
-            notes.map(note => {
-              const isFav = userFavorites.includes(note._id);
-              return (
-                <div
-          key={note._id}
-          className="relative bg-gradient-to-br from-gray-800 via-gray-900 to-gray-800 p-5 rounded-xl shadow-lg hover:scale-105 transition cursor-pointer h-[6.5rem] overflow-hidden"
-          onClick={() => router.push(`/notes/${semester}/${note._id}`)}
-        >
-          {/* Favorite toggle */}
+      <div className="flex flex-col h-[calc(100vh-160px)]">
+        {/* Sticky Header */}
+        <div className="sticky top-0 z-10 bg-gray-900 p-4 flex items-center space-x-4 shadow-md">
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleFavorite(note._id);
-            }}
-            className={`absolute top-2 right-2 text-2xl z-10 ${
-              isFav ? "text-yellow-400" : "text-gray-400 hover:text-yellow-300"
-            }`}
+            onClick={() => router.back()}
+            className="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg"
           >
-            {isFav ? "★" : "☆"}
+            ⬅ Back
           </button>
-
-          <h2 className="text-lg font-semibold mb-1 text-teal-400 truncate">{note.title}</h2>
-          <p className="text-gray-400 text-sm truncate">Semester: {semester}</p>
-          {note.subject && <p className="text-gray-400 text-sm truncate">{note.subject}</p>}
+          <h1 className="text-2xl font-bold capitalize">{semester} Semester Notes</h1>
         </div>
 
-      );
-    })
-  )}
-</div>
+        <div className="flex flex-1 space-x-4 overflow-hidden mt-4">
+          {/* Sidebar */}
+          <div className="w-48 bg-gray-900 p-4 rounded-lg flex flex-col space-y-2 overflow-y-auto">
+            {subjectsBySemester[semester]?.map(subject => (
+              <button
+                key={subject}
+                className={`px-4 py-2 rounded text-left transition-all duration-300 transform ${
+                  selectedSubject === subject
+                    ? "bg-teal-500 text-white shadow-lg scale-105"
+                    : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                }`}
+                onClick={() => setSelectedSubject(subject)}
+              >
+                {subject}
+              </button>
+            ))}
+          </div>
 
+          {/* Notes Section */}
+          <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-3 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900 p-2">
+            {loading ? (
+              <p>Loading notes...</p>
+            ) : notes.length === 0 ? (
+              <p>No notes found for this subject.</p>
+            ) : (
+              notes.map(note => {
+                const isFav = userFavorites.includes(note._id);
+                return (
+                  <div
+                    key={note._id}
+                    className="relative bg-gradient-to-br from-gray-800 via-gray-900 to-gray-800 p-4 rounded-xl shadow-lg hover:scale-105 transition cursor-pointer"
+                    onClick={() => router.push(`/notes/${semester}/${note._id}`)}
+                  >
+                    {/* Favorite toggle */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleFavorite(note._id);
+                      }}
+                      className={`absolute top-2 right-2 text-2xl z-10 ${
+                        isFav ? "text-yellow-400" : "text-gray-400 hover:text-yellow-300"
+                      }`}
+                    >
+                      {isFav ? "★" : "☆"}
+                    </button>
 
+                    {/* Only Title and Content */}
+                    <h2 className="text-lg font-semibold mb-1 text-teal-400 truncate line-clamp-1">
+                      {note.title || "Untitled Note"}
+                    </h2>
+                    <p className="text-gray-300 text-sm line-clamp-3">
+                      {note.content || note.description || "No content available"}
+                    </p>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
       </div>
     </DashboardLayout>
   );

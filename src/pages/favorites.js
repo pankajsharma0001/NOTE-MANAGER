@@ -66,20 +66,18 @@ export default function Favorites() {
 
               {/* Title */}
               <h2 className="text-xl font-semibold mb-2 text-teal-400">
-                {fav.title}
+                {fav.title || "Untitled Note"}
               </h2>
+
+              {/* Subject */}
+              <p className="text-gray-400 mb-1">
+                Subject: {fav.subject || "Not specified"}
+              </p>
 
               {/* Semester */}
               <p className="text-gray-400 mb-1">
                 Semester: {fav.semester}
               </p>
-
-              {/* Subject */}
-              {fav.subject && (
-                <p className="text-gray-400 mb-1">
-                  Subject: {fav.subject}
-                </p>
-              )}
             </div>
           ))}
         </div>

@@ -13,19 +13,14 @@ export default async function handler(req, res) {
     return res.status(401).json({ success: false, message: "Not authenticated" });
 
   try {
-    const user = await User.findById(session.user.id)
-      .select("favorites")
-      .populate({
-        path: "favorites.noteId",      // populate the Note referenced
-        select: "subject bookName title", // only return the needed fields
-      });
+    const user = await User.findById(session.user.id).select("favorites");
 
-    // ✅ Map favorites to include subject & bookName directly
+    // ✅ No populate, just return stored data
     const favorites = user.favorites.map((fav) => ({
-      noteId: fav.noteId._id,
+      noteId: fav.noteId.toString(),
       semester: fav.semester,
-      title: fav.noteId.title || fav.title, // prefer note title if present
-      subject: fav.noteId.subject,
+      title: fav.title,
+      subject: fav.subject || "", // keep compatible
     }));
 
     return res.status(200).json({ success: true, favorites });

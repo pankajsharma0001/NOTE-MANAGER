@@ -12,7 +12,7 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_SECRET,
 });
 
-// Multer (memory storage because we'll stream directly to Cloudinary)
+// Multer memory storage
 const upload = multer({ storage: multer.memoryStorage() });
 const router = createRouter();
 
@@ -21,18 +21,19 @@ router.use(upload.single("file"));
 router.post(async (req, res) => {
   await connectMongo();
 
-  const { title, subject, semester, description, userId } = req.body;
+  const { title, subject, semester, content, userId } = req.body;
+
+  console.log("🟢 Body received in upload API:", req.body); // debug
+  console.log("🟢 UserId received:", userId); // debug
 
   if (!req.file) {
     return res.status(400).json({ success: false, error: "No file uploaded" });
   }
 
   try {
-    // ✅ Force PDFs to be uploaded as IMAGE resources so they preview inline
     const isPdf = req.file.mimetype === "application/pdf";
-    const resourceType = isPdf ? "image" : "auto"; // <— key change
+    const resourceType = isPdf ? "image" : "auto";
 
-    // ✅ Build a safe public ID (keep .pdf for clarity)
     const extension = isPdf ? ".pdf" : "";
     const safeTitle = title
       ? title.trim().replace(/[^a-zA-Z0-9-_]/g, "_")
@@ -47,7 +48,7 @@ router.post(async (req, res) => {
             public_id: publicId,
             use_filename: true,
             unique_filename: false,
-            format: isPdf ? "pdf" : undefined, // ensure Cloudinary keeps it as pdf
+            format: isPdf ? "pdf" : undefined,
           },
           (error, result) => {
             if (result) resolve(result);
@@ -59,20 +60,22 @@ router.post(async (req, res) => {
 
     const result = await streamUpload();
 
-    // ✅ Save to MongoDB
+    // Save to MongoDB
     const newPendingNote = await PendingNote.create({
       title,
       subject,
       semester,
-      description,
-      fileUrl: result.secure_url, // will now be .../upload/... and iframe-previewable
+      content,
+      fileUrl: result.secure_url,
       uploadedBy: userId || null,
     });
 
-    res.status(200).json({ success: true, data: newPendingNote });
+    console.log("🟢 Saved Note:", newPendingNote); // debug
+
+    return res.status(200).json({ success: true, data: newPendingNote });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false, error: err.message });
+    return res.status(500).json({ success: false, error: err.message });
   }
 });
 

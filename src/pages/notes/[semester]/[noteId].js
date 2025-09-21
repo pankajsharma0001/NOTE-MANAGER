@@ -19,14 +19,13 @@ export default function NoteDetail() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6 flex flex-col-reverse md:flex-row">
-      {/* Left: PDF Preview */}
       {note.fileUrl && (
-        <div className="flex-1 md:ml-2">
+        <div className="flex-1 md:ml-2 md:mr-4 flex">
           <iframe
             src={note.fileUrl}
             width="100%"
-            height="600"
-            style={{ border: "none" }}
+            className="flex-1 rounded-xl"
+            style={{ border: "none", minHeight: "400px", height: "100%" }}
           ></iframe>
         </div>
       )}
@@ -66,8 +65,6 @@ export default function NoteDetail() {
           <p className="mt-4 text-gray-300">{note.content}</p>
         )}
       </div>
-
-      
     </div>
   );
 }

@@ -5,7 +5,7 @@ const PendingNoteSchema = new mongoose.Schema({
   title: { type: String, required: true },
   subject: { type: String, required: true },
   semester: { type: String, required: true },
-  description: { type: String },
+  content: { type: String },
   fileUrl: { type: String, required: true },
   uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // track user
   uploadedAt: { type: Date, default: Date.now },

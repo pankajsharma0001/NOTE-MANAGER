@@ -1,38 +1,39 @@
 import { useState, useRef, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import DashboardLayout from "../components/DashboardLayout";
 
 export default function SharePage() {
+  const { data: session } = useSession();
   const [form, setForm] = useState({
     title: "",
     subject: "",
     semester: "",
-    description: "",
+    content: "",
   });
   const [file, setFile] = useState(null);
-  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const descRef = useRef(null);
+  const [toast, setToast] = useState({ message: "", type: "", show: false });
+  const contentRef = useRef(null);
 
   const semesterMap = {
-    1: "first",
-    2: "second",
-    3: "third",
-    4: "fourth",
-    5: "fifth",
-    6: "sixth",
-    7: "seventh",
-    8: "eighth",
+    1: "first", 2: "second", 3: "third", 4: "fourth",
+    5: "fifth", 6: "sixth", 7: "seventh", 8: "eighth",
   };
 
   const subjectsBySemester = {
-    1: ["Applied Chemistry", "Applied Physics", "Calculus I", "Communication Techniques", "Computer Programming", "Engineering Drawing"],
-    2: ["Algebra & Geometry", "Applied Mechanics", "Basic Electrical and Electronics Engineering", "Civil Engineering Materials", "Civil Engineering Workshop", "Engineering Geology", "Introduction to Energy Engineering"],
-    3: ["Building Technology", "Calculus II", "Fluid Mechanics", "Numerical Methods", "Strength of Materials", "Surveying I"],
-    4: ["Engineering Economics", "Hydraulics", "Probability and Statistics", "", "Soil Mechanics", "Structural Analysis I", "Surveying II"],
-    5: ["Engineering Hydrology", "Design of Steel and Timber Structure", "Foundation Engineering", "Structural Analysis II", "Transportation Engineering I", "Water Supply Engineering"],
-    6: ["Civil Engineering Project I", "Concrete Technology & Masonry Structure", "Estimation and Valuation", "Elective I", "Irrigation and Dranage Engineering", "Sanitary Engineering", "Survery Field Project", "Transportation Engineering II"],
-    7: ["Civil Engineering Project II", "Construction Project Management", "Design of R.C.C. Structure", "Elective II", "Engineering Professional Practice", "Hydropower Engineering"],
-    8: ["Elective III", "Internship"],
+    1: ["Applied Chemistry","Applied Physics","Calculus I","Communication Techniques","Computer Programming","Engineering Drawing"],
+    2: ["Algebra & Geometry","Applied Mechanics","Basic Electrical and Electronics Engineering","Civil Engineering Materials","Civil Engineering Workshop","Engineering Geology","Introduction to Energy Engineering"],
+    3: ["Building Technology","Calculus II","Fluid Mechanics","Numerical Methods","Strength of Materials","Surveying I"],
+    4: ["Engineering Economics","Hydraulics","Probability and Statistics","","Soil Mechanics","Structural Analysis I","Surveying II"],
+    5: ["Engineering Hydrology","Design of Steel and Timber Structure","Foundation Engineering","Structural Analysis II","Transportation Engineering I","Water Supply Engineering"],
+    6: ["Civil Engineering Project I","Concrete Technology & Masonry Structure","Estimation and Valuation","Elective I","Irrigation and Dranage Engineering","Sanitary Engineering","Survery Field Project","Transportation Engineering II"],
+    7: ["Civil Engineering Project II","Construction Project Management","Design of R.C.C. Structure","Elective II","Engineering Professional Practice","Hydropower Engineering"],
+    8: ["Elective III","Internship"],
+  };
+
+  const showToast = (message, type = "success") => {
+    setToast({ message, type, show: true });
+    setTimeout(() => setToast((prev) => ({ ...prev, show: false })), 4000);
   };
 
   const handleChange = (e) => {
@@ -40,10 +41,9 @@ export default function SharePage() {
     setForm({ ...form, [name]: value });
 
     if (name === "semester") setForm((prev) => ({ ...prev, subject: "" }));
-
-    if (name === "description" && descRef.current) {
-      descRef.current.style.height = "auto";
-      descRef.current.style.height = descRef.current.scrollHeight + "px";
+    if (name === "content" && contentRef.current) {
+      contentRef.current.style.height = "auto";
+      contentRef.current.style.height = contentRef.current.scrollHeight + "px";
     }
   };
 
@@ -51,7 +51,7 @@ export default function SharePage() {
     e.preventDefault();
 
     if (!form.semester || !form.subject || !file) {
-      setMessage("❌ Please fill all required fields and choose a file.");
+      showToast("Please fill all required fields and choose a file.", "error");
       return;
     }
 
@@ -64,24 +64,26 @@ export default function SharePage() {
     });
     formData.append("file", file);
 
+    if (session?.user?.id) formData.append("userId", session.user.id);
+
     try {
       const res = await fetch("/api/share/upload", { method: "POST", body: formData });
       const data = await res.json();
       if (data.success) {
-        setMessage("✅ File submitted successfully!");
-        setForm({ title: "", subject: "", semester: "", description: "" });
+        showToast("File submitted successfully!", "success");
+        setForm({ title: "", subject: "", semester: "", content: "" });
         setFile(null);
-        if (descRef.current) descRef.current.style.height = "2.5rem";
-      } else setMessage(`❌ Upload failed! ${data.error || ""}`);
+        if (contentRef.current) contentRef.current.style.height = "2.5rem";
+      } else showToast(`Upload failed! ${data.error || ""}`, "error");
     } catch (err) {
-      setMessage(`❌ Upload failed! ${err.message}`);
+      showToast(`Upload failed! ${err.message}`, "error");
     }
 
     setLoading(false);
   };
 
   useEffect(() => {
-    if (descRef.current) descRef.current.style.height = "2.5rem";
+    if (contentRef.current) contentRef.current.style.height = "2.5rem";
   }, []);
 
   return (
@@ -89,7 +91,7 @@ export default function SharePage() {
       <div className="min-h-screen flex justify-center items-start pt-12 overflow-hidden">
         <form
           onSubmit={handleSubmit}
-          className="bg-gray-800 p-8 rounded-xl shadow-lg w-[600px] flex flex-col gap-4"
+          className="bg-gray-800 p-8 rounded-xl shadow-lg w-[600px] flex flex-col gap-4 relative"
         >
           <h1 className="text-2xl font-bold text-center">Share a Note</h1>
 
@@ -120,7 +122,7 @@ export default function SharePage() {
             </select>
           </div>
 
-          {/* Subject + Description */}
+          {/* Subject + Content */}
           <div className="grid grid-cols-2 gap-4">
             <select
               name="subject"
@@ -130,24 +132,20 @@ export default function SharePage() {
               disabled={!form.semester}
               required
             >
-              <option value="">
-                {form.semester ? "Select Subject" : "Select Semester first"}
-              </option>
+              <option value="">{form.semester ? "Select Subject" : "Select Semester first"}</option>
               {form.semester &&
                 subjectsBySemester[form.semester].map((subj, idx) => (
-                  <option key={idx} value={subj}>
-                    {subj}
-                  </option>
+                  <option key={idx} value={subj}>{subj}</option>
                 ))}
             </select>
 
             <textarea
-              ref={descRef}
-              name="description"
-              placeholder="Description"
+              ref={contentRef}
+              name="content"
+              placeholder="Content / Description"
               className="p-2 rounded bg-gray-700 w-full resize-none overflow-hidden transition-all duration-200"
               style={{ minHeight: "2.5rem" }}
-              value={form.description}
+              value={form.content}
               onChange={handleChange}
             />
           </div>
@@ -205,7 +203,14 @@ export default function SharePage() {
             {loading ? "Uploading..." : "Submit"}
           </button>
 
-          {message && <p className="mt-2 text-center">{message}</p>}
+          {/* Animated Toast */}
+          <div
+            className={`fixed bottom-8 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded shadow-lg text-white transition-all duration-500 ${
+              toast.show ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+            } ${toast.type === "success" ? "bg-green-500" : "bg-red-500"}`}
+          >
+            {toast.message}
+          </div>
         </form>
       </div>
     </DashboardLayout>
