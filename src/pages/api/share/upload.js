@@ -5,14 +5,12 @@ import { v2 as cloudinary } from "cloudinary";
 import { connectMongo } from "../../../lib/mongodb";
 import PendingNote from "../../../models/PendingNote";
 
-// --- Cloudinary Config ---
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_NAME,
   api_key: process.env.CLOUDINARY_KEY,
   api_secret: process.env.CLOUDINARY_SECRET,
 });
 
-// Multer memory storage
 const upload = multer({ storage: multer.memoryStorage() });
 const router = createRouter();
 
@@ -23,22 +21,21 @@ router.post(async (req, res) => {
 
   const { title, subject, semester, content, userId } = req.body;
 
-  console.log("🟢 Body received in upload API:", req.body); // debug
-  console.log("🟢 UserId received:", userId); // debug
-
   if (!req.file) {
     return res.status(400).json({ success: false, error: "No file uploaded" });
   }
 
   try {
     const isPdf = req.file.mimetype === "application/pdf";
+
+    // ✅ Use "image" so Cloudinary serves a PDF with a previewable Content-Type
     const resourceType = isPdf ? "image" : "auto";
 
-    const extension = isPdf ? ".pdf" : "";
+    // ✅ Don't put ".pdf" in public_id – Cloudinary will add exactly one
     const safeTitle = title
       ? title.trim().replace(/[^a-zA-Z0-9-_]/g, "_")
       : Date.now();
-    const publicId = `notes/${safeTitle}-${Date.now()}${extension}`;
+    const publicId = `notes/${safeTitle}-${Date.now()}`;
 
     const streamUpload = () =>
       new Promise((resolve, reject) => {
@@ -48,7 +45,7 @@ router.post(async (req, res) => {
             public_id: publicId,
             use_filename: true,
             unique_filename: false,
-            format: isPdf ? "pdf" : undefined,
+            format: isPdf ? "pdf" : undefined, // ✅ Force correct format
           },
           (error, result) => {
             if (result) resolve(result);
@@ -60,17 +57,14 @@ router.post(async (req, res) => {
 
     const result = await streamUpload();
 
-    // Save to MongoDB
     const newPendingNote = await PendingNote.create({
       title,
       subject,
       semester,
       content,
-      fileUrl: result.secure_url,
+      fileUrl: result.secure_url, // e.g. .../raw/upload/notes/yourfile.pdf
       uploadedBy: userId || null,
     });
-
-    console.log("🟢 Saved Note:", newPendingNote); // debug
 
     return res.status(200).json({ success: true, data: newPendingNote });
   } catch (err) {

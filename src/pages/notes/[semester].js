@@ -137,7 +137,7 @@ export default function Semester() {
                       {note.title || "Untitled Note"}
                     </h2>
                     <p className="text-gray-300 text-sm line-clamp-3">
-                      {note.content || note.description || "No content available"}
+                      {note.content || "No content available"}
                     </p>
                   </div>
                 );

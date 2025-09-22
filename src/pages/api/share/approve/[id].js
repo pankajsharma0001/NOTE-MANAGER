@@ -16,9 +16,9 @@ export default async function handler(req, res) {
         title: pending.title,
         subject: pending.subject,
         semester: pending.semester, // already stored as "first", "second", etc.
-        content: pending.description,
+        content: pending.content,
         fileUrl: pending.fileUrl,
-        createdBy: pending.uploadedBy,
+        uploadedBy: pending.uploadedBy,
       });
 
       // Remove from PendingNote

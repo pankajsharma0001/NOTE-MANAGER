@@ -1,5 +1,6 @@
 import { useRouter } from "next/router";
 import useSWR from "swr";
+import Image from "next/image";
 
 const fetcher = (url) => fetch(url).then((res) => res.json());
 
@@ -7,6 +8,7 @@ export default function NoteDetail() {
   const router = useRouter();
   const { noteId } = router.query;
 
+  // Only fetch when noteId exists
   const { data, error } = useSWR(
     noteId ? `/api/notes/${noteId}` : null,
     fetcher
@@ -17,8 +19,12 @@ export default function NoteDetail() {
 
   const note = data.data;
 
+  // Debug: log note object
+  console.log("Note data:", note);
+
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6 flex flex-col-reverse md:flex-row">
+      {/* Left: File preview */}
       {note.fileUrl && (
         <div className="flex-1 md:ml-2 md:mr-4 flex">
           <iframe
@@ -30,7 +36,7 @@ export default function NoteDetail() {
         </div>
       )}
 
-      {/* Right: Note Details (on desktop), top on mobile */}
+      {/* Right: Note details */}
       <div className="w-full md:w-1/4 bg-gray-800 p-4 rounded-xl shadow-lg flex-shrink-0 mb-4 md:mb-0">
         {/* Back button */}
         <button
@@ -63,6 +69,27 @@ export default function NoteDetail() {
 
         {note.content && (
           <p className="mt-4 text-gray-300">{note.content}</p>
+        )}
+
+        {/* Uploaded by section */}
+        {note.uploadedBy && (
+          <div className="flex items-center mt-4">
+            <Image
+              src={note.uploadedBy.image || "/default-avatar.png"}
+              alt={note.uploadedBy.name || "User"}
+              width={40}
+              height={40}
+              className="rounded-full mr-2 object-cover"
+            />
+            <div>
+              <p className="text-gray-400 text-sm">
+                Uploaded by {note.uploadedBy.name || "Unknown"}
+              </p>
+              {note.uploadedBy.email && (
+                <p className="text-gray-500 text-xs">{note.uploadedBy.email}</p>
+              )}
+            </div>
+          </div>
         )}
       </div>
     </div>

@@ -8,6 +8,7 @@ export default function Approvals() {
   const [selectedNote, setSelectedNote] = useState(null);
   const [profileModal, setProfileModal] = useState(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
 
   // Fetch pending notes
@@ -43,9 +44,12 @@ export default function Approvals() {
     } else alert("Failed to reject note.");
   };
 
-  // ESC closes profile popup
+  // ESC closes both modals
   const escHandler = useCallback((e) => {
-    if (e.key === "Escape") setProfileModal(null);
+    if (e.key === "Escape") {
+      setProfileModal(null);
+      setSelectedNote(null);
+    }
   }, []);
   useEffect(() => {
     document.addEventListener("keydown", escHandler);
@@ -153,24 +157,18 @@ export default function Approvals() {
           <div
             className="bg-gray-900 rounded-xl p-6 w-96 relative cursor-move"
             style={{
-              position: "absolute",
-              left: `calc(50% + ${dragOffset.x}px)`,
-              top: `calc(50% + ${dragOffset.y}px)`,
-              transform: "translate(-50%, -50%)",
+              transform: `translate(${dragOffset.x}px, ${dragOffset.y}px)`,
             }}
             onMouseDown={(e) => {
               setDragging(true);
-              setDragOffset({
-                x: e.clientX - window.innerWidth / 2 + dragOffset.x,
-                y: e.clientY - window.innerHeight / 2 + dragOffset.y,
-              });
+              setDragStart({ x: e.clientX - dragOffset.x, y: e.clientY - dragOffset.y });
             }}
             onMouseUp={() => setDragging(false)}
             onMouseMove={(e) => {
               if (!dragging) return;
               setDragOffset({
-                x: e.clientX - window.innerWidth / 2,
-                y: e.clientY - window.innerHeight / 2,
+                x: e.clientX - dragStart.x,
+                y: e.clientY - dragStart.y,
               });
             }}
           >
@@ -191,18 +189,10 @@ export default function Approvals() {
               />
               <h2 className="text-2xl font-bold mb-2">{profileModal.name}</h2>
               <p className="text-gray-400 mb-2">{profileModal.email}</p>
-              {profileModal.college && (
-                <p className="text-gray-300">College: {profileModal.college}</p>
-              )}
-              {profileModal.semester && (
-                <p className="text-gray-300">Semester: {profileModal.semester}</p>
-              )}
-              {profileModal.address && (
-                <p className="text-gray-300">Address: {profileModal.address}</p>
-              )}
-              {profileModal.phone && (
-                <p className="text-gray-300">Phone: {profileModal.phone}</p>
-              )}
+              {profileModal.college && <p className="text-gray-300">College: {profileModal.college}</p>}
+              {profileModal.semester && <p className="text-gray-300">Semester: {profileModal.semester}</p>}
+              {profileModal.address && <p className="text-gray-300">Address: {profileModal.address}</p>}
+              {profileModal.phone && <p className="text-gray-300">Phone: {profileModal.phone}</p>}
             </div>
           </div>
         </div>

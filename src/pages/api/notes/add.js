@@ -13,7 +13,7 @@ export default async function handler(req, res) {
         subject,
         semester,
         content,
-        createdBy: userId,
+        uploadedBy: userId,
       });
 
       return res.status(201).json({ success: true, data: newNote });
