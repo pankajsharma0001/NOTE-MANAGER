@@ -3,7 +3,6 @@ import GoogleProvider from "next-auth/providers/google";
 import { connectMongo } from "../../../lib/mongodb";
 import User from "../../../models/User";
 
-// 👇 export authOptions so getServerSession can use the SAME config
 export const authOptions = {
   providers: [
     GoogleProvider({
@@ -20,7 +19,7 @@ export const authOptions = {
     strategy: "jwt",
   },
 
-  secret: process.env.NEXTAUTH_SECRET, // 🔑 must be set in .env.local
+  secret: process.env.NEXTAUTH_SECRET,
 
   callbacks: {
     async jwt({ token, account, profile }) {
@@ -35,6 +34,10 @@ export const authOptions = {
             email: profile.email,
             image: profile.picture,
           });
+        } else {
+          // 🔹 Increment login count
+          user.loginCount = (user.loginCount || 0) + 1;
+          await user.save();
         }
 
         token.userId = user._id.toString();
@@ -48,6 +51,8 @@ export const authOptions = {
         token.college = user.college || "";
         token.address = user.address || "";
         token.phone = user.phone || "";
+        token.loginCount = user.loginCount || 0;
+        token.lastReadNote = user.lastReadNote || null;
       }
 
       return token;
@@ -64,6 +69,8 @@ export const authOptions = {
         session.user.college = token.college;
         session.user.address = token.address;
         session.user.phone = token.phone;
+        session.user.loginCount = token.loginCount;
+        session.user.lastReadNote = token.lastReadNote;
       }
       return session;
     },

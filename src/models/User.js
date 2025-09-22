@@ -7,6 +7,11 @@ const favoriteSchema = new mongoose.Schema({
   subject: { type: String },   // optional cached subject
 });
 
+const notesProgressSchema = new mongoose.Schema({
+  noteId: { type: mongoose.Schema.Types.ObjectId, ref: "Note" },
+  progress: { type: Number, default: 0 }, // 0-100%
+});
+
 const userSchema = new mongoose.Schema(
   {
     name: { type: String },
@@ -17,6 +22,12 @@ const userSchema = new mongoose.Schema(
     address: { type: String },
     phone: { type: String },
     favorites: [favoriteSchema],
+
+    // 🔹 New dynamic fields
+    loginCount: { type: Number, default: 1 },
+    lastReadNote: { type: mongoose.Schema.Types.ObjectId, ref: "Note" },
+    lastReadAt: Date,
+    notesProgress: [notesProgressSchema],
   },
   { timestamps: true }
 );
