@@ -139,7 +139,7 @@ export default function Dashboard() {
           <div>
             <h2 className="text-gray-400 text-lg">{getGreeting()}</h2>
             <h1 className="text-3xl font-bold">
-              Let's start learning, <span className="text-teal-400">{session.user.name?.toUpperCase()}</span>
+              Let&apos;s start learning, <span className="text-teal-400">{session.user.name?.toUpperCase()}</span>
             </h1>
           </div>
 
