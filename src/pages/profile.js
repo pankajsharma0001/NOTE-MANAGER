@@ -17,6 +17,11 @@ export default function Profile({ embedded = false, onComplete }) {
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
 
+  const semesterOptions = [
+    "First", "Second", "Third", "Fourth",
+    "Fifth", "Sixth", "Seventh", "Eighth"
+  ];
+
   useEffect(() => {
     if (session?.user) {
       setName(session.user.name || "");
@@ -28,10 +33,9 @@ export default function Profile({ embedded = false, onComplete }) {
 
       // Check if any required field is missing
       if (
-        !session.user.semester ||
-        !session.user.college ||
-        !session.user.address ||
-        !session.user.phone
+        !session.user.profileComplete &&
+        (!session.user.semester || !session.user.college ||
+         !session.user.address || !session.user.phone)
       ) {
         setIsFirstTime(true);
         setEditing(true);
@@ -45,6 +49,8 @@ export default function Profile({ embedded = false, onComplete }) {
     return null;
   }
 
+  // ---------------- SAVE PROFILE ----------------
+  // After saving/updating the profile
   const handleSave = async () => {
     try {
       const res = await fetch("/api/user/update", {
@@ -61,23 +67,21 @@ export default function Profile({ embedded = false, onComplete }) {
         }),
       });
       const data = await res.json();
+
       if (data.success) {
-        // Update the session immediately
-        await update({
-          ...session,
-          user: { ...session.user, ...data.user, profileComplete: true },
-        });
+        // Update session with fresh user data
+        await update({ ...session, user: { ...session.user, ...data.user } });
         setEditing(false);
         setIsFirstTime(false);
-        if (onComplete) onComplete();
-      } else {
-        alert("❌ Failed to update: " + data.message);
+
+        if (onComplete) onComplete(); // hide modal in dashboard.js
       }
     } catch (err) {
       alert("❌ Error updating profile: " + err.message);
     }
   };
 
+  // Skip button
   const handleSkip = async () => {
     try {
       const res = await fetch("/api/user/update", {
@@ -86,16 +90,13 @@ export default function Profile({ embedded = false, onComplete }) {
         body: JSON.stringify({ email, profileComplete: true }),
       });
       const data = await res.json();
+
       if (data.success) {
-        await update({
-          ...session,
-          user: { ...session.user, ...data.user, profileComplete: true },
-        });
+        await update({ ...session, user: { ...session.user, ...data.user } });
         setEditing(false);
         setIsFirstTime(false);
-        if (onComplete) onComplete();
-      } else {
-        alert("❌ Failed to skip: " + data.message);
+
+        if (onComplete) onComplete(); // hide modal in dashboard.js
       }
     } catch (err) {
       alert("❌ Error skipping profile: " + err.message);
@@ -103,13 +104,7 @@ export default function Profile({ embedded = false, onComplete }) {
   };
 
   return (
-    <div
-      className={`${
-        embedded
-          ? "bg-gray-800 p-6 rounded-lg shadow-lg"
-          : "min-h-screen bg-gray-900 p-8"
-      }`}
-    >
+    <div className={`${embedded ? "bg-gray-800 p-6 rounded-lg shadow-lg" : "min-h-screen bg-gray-900 p-8"}`}>
       {!embedded && (
         <header className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-4">
@@ -138,7 +133,7 @@ export default function Profile({ embedded = false, onComplete }) {
       <div className={`${embedded ? "" : "max-w-3xl mx-auto"} bg-gray-800 p-8 rounded-xl shadow-lg`}>
         <div className="flex flex-col sm:flex-row items-center sm:items-start mb-6">
           <Image
-            src={session.user.image}
+            src={session.user.image || "/default-avatar.png"}
             alt="Profile"
             className="w-24 h-24 rounded-full ring-2 ring-teal-400 mb-4 sm:mb-0 sm:mr-6"
             width={80}
@@ -164,21 +159,51 @@ export default function Profile({ embedded = false, onComplete }) {
               </>
             ) : (
               <div className="flex flex-col space-y-4">
+                <div>
+                  <label className="block text-gray-300 mb-1">Name *</label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full px-4 py-2 rounded-lg bg-gray-700 text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-gray-300 mb-1">Email *</label>
+                  <input
+                    type="email"
+                    value={email}
+                    readOnly   // or disabled
+                    className="w-full px-4 py-2 rounded-lg bg-gray-600 text-gray-400 cursor-not-allowed"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-gray-300 mb-1">Semester *</label>
+                  <select
+                    value={semester}
+                    onChange={(e) => setSemester(e.target.value)}
+                    className="w-full px-4 py-2 rounded-lg bg-gray-700 text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-400"
+                  >
+                    <option value="">-- Select Semester --</option>
+                    {semesterOptions.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </div>
+
                 {[
-                  { label: "Name", val: name, set: setName, type: "text" },
-                  { label: "Email", val: email, set: setEmail, type: "email" },
-                  { label: "Semester", val: semester, set: setSemester, type: "text", placeholder: "e.g., 5th" },
-                  { label: "College", val: college, set: setCollege, type: "text" },
-                  { label: "Address", val: address, set: setAddress, type: "text" },
-                  { label: "Phone", val: phone, set: setPhone, type: "text" },
+                  { label: "College", val: college, set: setCollege },
+                  { label: "Address", val: address, set: setAddress },
+                  { label: "Phone", val: phone, set: setPhone },
                 ].map((f, i) => (
                   <div key={i}>
                     <label className="block text-gray-300 mb-1">{f.label}</label>
                     <input
-                      type={f.type}
+                      type="text"
                       value={f.val}
                       onChange={(e) => f.set(e.target.value)}
-                      placeholder={f.placeholder || ""}
                       className="w-full px-4 py-2 rounded-lg bg-gray-700 text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-400"
                     />
                   </div>

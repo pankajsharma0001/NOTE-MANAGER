@@ -10,6 +10,15 @@ export default function DashboardLayout({ children }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef();
 
+  // 🔹 Dynamic Greeting based on time
+  const [greeting, setGreeting] = useState("");
+  useEffect(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) setGreeting("Good Morning ☀️");
+    else if (hour < 18) setGreeting("Good Afternoon ☕");
+    else setGreeting("Good Evening 🌙");
+  }, []);
+
   const sidebarItems = [
     { icon: "🏠", label: "Home", path: "/dashboard" },
     { icon: "📁", label: "Notes", path: "/notes" },
@@ -79,7 +88,7 @@ export default function DashboardLayout({ children }) {
         {/* Header */}
         <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
           <div>
-            <h2 className="text-gray-400 text-lg">Good Afternoon ☕</h2>
+            <h2 className="text-gray-400 text-lg">{greeting}</h2>
             <h1 className="text-3xl font-bold">
               Welcome,{" "}
               <span className="text-teal-400">

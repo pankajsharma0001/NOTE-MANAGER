@@ -17,14 +17,18 @@ export const authOptions = {
 
   session: {
     strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+    updateAge: 24 * 60 * 60,   // refresh JWT every 24 hours
   },
 
   secret: process.env.NEXTAUTH_SECRET,
 
   callbacks: {
+    // 🔑 Runs on every request to keep token fresh
     async jwt({ token, account, profile }) {
       await connectMongo();
 
+      // First login/signup
       if (account && profile) {
         let user = await User.findOne({ email: profile.email });
 
@@ -35,24 +39,33 @@ export const authOptions = {
             image: profile.picture,
           });
         } else {
-          // 🔹 Increment login count
+          // Increment login count
           user.loginCount = (user.loginCount || 0) + 1;
           await user.save();
         }
 
         token.userId = user._id.toString();
-        token.name = user.name;
-        token.email = user.email;
-        token.image = user.image;
-        token.role = ["sharmapankaj102030@gmail.com"].includes(user.email)
-          ? "admin"
-          : "user";
-        token.semester = user.semester || "";
-        token.college = user.college || "";
-        token.address = user.address || "";
-        token.phone = user.phone || "";
-        token.loginCount = user.loginCount || 0;
-        token.lastReadNote = user.lastReadNote || null;
+      }
+
+      // Always fetch latest data from DB
+      if (token.userId) {
+        const freshUser = await User.findById(token.userId).lean();
+        if (freshUser) {
+          token.name = freshUser.name;
+          token.email = freshUser.email;
+          token.image = freshUser.image;
+          token.role = ["sharmapankaj102030@gmail.com"].includes(freshUser.email)
+            ? "admin"
+            : "user";
+          token.semester = freshUser.semester || "";
+          token.college = freshUser.college || "";
+          token.address = freshUser.address || "";
+          token.phone = freshUser.phone || "";
+          token.loginCount = freshUser.loginCount || 0;
+          token.lastReadNote = freshUser.lastReadNote || null;
+          token.lastReadAt = freshUser.lastReadAt || null;
+          token.profileComplete = freshUser.profileComplete || false;
+        }
       }
 
       return token;
@@ -71,6 +84,8 @@ export const authOptions = {
         session.user.phone = token.phone;
         session.user.loginCount = token.loginCount;
         session.user.lastReadNote = token.lastReadNote;
+        session.user.lastReadAt = token.lastReadAt;
+        session.user.profileComplete = token.profileComplete;
       }
       return session;
     },

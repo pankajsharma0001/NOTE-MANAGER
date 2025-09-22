@@ -21,6 +21,7 @@ const userSchema = new mongoose.Schema(
     college: { type: String },
     address: { type: String },
     phone: { type: String },
+    profileComplete: { type: Boolean, default: false },
     favorites: [favoriteSchema],
 
     // 🔹 New dynamic fields
