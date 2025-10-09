@@ -192,6 +192,28 @@ export default function Dashboard() {
           </div>
         )}
       </section>
+
+      {/* QR Codes for WhatsApp and Telegram */}
+      <div className="fixed bottom-6 right-6 flex flex-col items-end gap-4 z-50">
+        {/* WhatsApp QR */}
+        <a
+          href="https://chat.whatsapp.com/BiJgWxfsEFA7gjQcqS0Nct"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="bg-white rounded-xl shadow-lg p-2 flex items-center hover:scale-105 transition"
+        >
+          <img
+            src="/whatsappQR.png"
+            alt="Join WhatsApp"
+            width={80}
+            height={80}
+            className="rounded"
+          />
+          <span className="ml-2 text-gray-800 font-semibold">WhatsApp</span>
+        </a>
+        {/* Telegram QR */}
+        
+      </div>
     </DashboardLayout>
   );
 }
