@@ -11,9 +11,34 @@ export default function SharePage() {
     content: "",
   });
   const [file, setFile] = useState(null);
+  const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState({ message: "", type: "", show: false });
+  const [isDesktop, setIsDesktop] = useState(false);
   const contentRef = useRef(null);
+
+  // detect desktop
+  useEffect(() => {
+    setIsDesktop(!("ontouchstart" in window));
+  }, []);
+
+  // prevent default drag-drop behavior (open file)
+  useEffect(() => {
+    const preventDefaults = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    ["dragenter", "dragover", "dragleave", "drop"].forEach((eventName) => {
+      window.addEventListener(eventName, preventDefaults, false);
+    });
+
+    return () => {
+      ["dragenter", "dragover", "dragleave", "drop"].forEach((eventName) => {
+        window.removeEventListener(eventName, preventDefaults, false);
+      });
+    };
+  }, []);
 
   const semesterMap = {
     1: "first", 2: "second", 3: "third", 4: "fourth",
@@ -24,7 +49,7 @@ export default function SharePage() {
     1: ["Applied Chemistry","Applied Physics","Calculus I","Communication Techniques","Computer Programming","Engineering Drawing"],
     2: ["Algebra & Geometry","Applied Mechanics","Basic Electrical and Electronics Engineering","Civil Engineering Materials","Civil Engineering Workshop","Engineering Geology","Introduction to Energy Engineering"],
     3: ["Building Technology","Calculus II","Fluid Mechanics","Numerical Methods","Strength of Materials","Surveying I"],
-    4: ["Engineering Economics","Hydraulics","Probability and Statistics","","Soil Mechanics","Structural Analysis I","Surveying II"],
+    4: ["Engineering Economics","Hydraulics","Probability and Statistics","Soil Mechanics","Structural Analysis I","Surveying II"],
     5: ["Engineering Hydrology","Design of Steel and Timber Structure","Foundation Engineering","Structural Analysis II","Transportation Engineering I","Water Supply Engineering"],
     6: ["Civil Engineering Project I","Concrete Technology & Masonry Structure","Estimation and Valuation","Elective I","Irrigation and Dranage Engineering","Sanitary Engineering","Survery Field Project","Transportation Engineering II"],
     7: ["Civil Engineering Project II","Construction Project Management","Design of R.C.C. Structure","Elective II","Engineering Professional Practice","Hydropower Engineering"],
@@ -39,12 +64,28 @@ export default function SharePage() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
-
     if (name === "semester") setForm((prev) => ({ ...prev, subject: "" }));
     if (name === "content" && contentRef.current) {
       contentRef.current.style.height = "auto";
       contentRef.current.style.height = contentRef.current.scrollHeight + "px";
     }
+  };
+
+  const handleFileSelect = (f) => {
+    if (!f) return;
+    setFile(f);
+    const fileType = f.type;
+    if (fileType.startsWith("image/")) setPreview(URL.createObjectURL(f));
+    else if (fileType === "application/pdf") setPreview("/pdf-icon.png"); // replace with your PDF icon path
+    else setPreview(null);
+  };
+
+  const handleDrop = (e) => {
+    if (!isDesktop) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const droppedFile = e.dataTransfer.files[0];
+    if (droppedFile) handleFileSelect(droppedFile);
   };
 
   const handleSubmit = async (e) => {
@@ -56,14 +97,12 @@ export default function SharePage() {
     }
 
     setLoading(true);
-
     const formData = new FormData();
     Object.keys(form).forEach((key) => {
       if (key === "semester") formData.append(key, semesterMap[form[key]]);
       else formData.append(key, form[key]);
     });
     formData.append("file", file);
-
     if (session?.user?.id) formData.append("userId", session.user.id);
 
     try {
@@ -73,12 +112,12 @@ export default function SharePage() {
         showToast("File submitted successfully!", "success");
         setForm({ title: "", subject: "", semester: "", content: "" });
         setFile(null);
+        setPreview(null);
         if (contentRef.current) contentRef.current.style.height = "2.5rem";
       } else showToast(`Upload failed! ${data.error || ""}`, "error");
     } catch (err) {
       showToast(`Upload failed! ${err.message}`, "error");
     }
-
     setLoading(false);
   };
 
@@ -88,27 +127,29 @@ export default function SharePage() {
 
   return (
     <DashboardLayout>
-      <div className="min-h-screen flex justify-center items-start pt-12 overflow-hidden">
+      <div className="min-h-screen flex justify-center items-start pt-12 px-4">
         <form
           onSubmit={handleSubmit}
-          className="bg-gray-800 p-8 rounded-xl shadow-lg w-[600px] flex flex-col gap-4 relative"
+          onDragOver={(e) => isDesktop && e.preventDefault()}
+          onDrop={handleDrop}
+          className="bg-gray-800 p-6 sm:p-8 rounded-xl shadow-lg w-full max-w-lg flex flex-col gap-4 relative"
         >
-          <h1 className="text-2xl font-bold text-center">Share a Note</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-center text-white">Share a Note</h1>
 
           {/* Title + Semester */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <input
               type="text"
               name="title"
               placeholder="Title"
-              className="p-2 rounded bg-gray-700 w-full h-10"
+              className="p-2 rounded bg-gray-700 w-full h-10 text-white"
               value={form.title}
               onChange={handleChange}
               required
             />
             <select
               name="semester"
-              className="p-2 rounded bg-gray-700 w-full h-10"
+              className="p-2 rounded bg-gray-700 w-full h-10 text-white"
               value={form.semester}
               onChange={handleChange}
               required
@@ -123,10 +164,10 @@ export default function SharePage() {
           </div>
 
           {/* Subject + Content */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <select
               name="subject"
-              className={`p-2 rounded bg-gray-700 w-full h-10 ${!form.semester ? "bg-gray-600 cursor-not-allowed" : ""}`}
+              className={`p-2 rounded bg-gray-700 w-full h-10 text-white ${!form.semester ? "bg-gray-600 cursor-not-allowed" : ""}`}
               value={form.subject}
               onChange={handleChange}
               disabled={!form.semester}
@@ -143,48 +184,59 @@ export default function SharePage() {
               ref={contentRef}
               name="content"
               placeholder="Content / Description"
-              className="p-2 rounded bg-gray-700 w-full resize-none overflow-hidden transition-all duration-200"
+              className="p-2 rounded bg-gray-700 w-full resize-none overflow-hidden text-white transition-all duration-200"
               style={{ minHeight: "2.5rem" }}
               value={form.content}
               onChange={handleChange}
             />
           </div>
 
-          {/* File Upload */}
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex-1 flex gap-2">
-              <input
-                type="file"
-                id="file"
-                className="hidden"
-                onChange={(e) => setFile(e.target.files[0])}
-                required
-              />
-              <label
-                htmlFor="file"
-                className={`cursor-pointer px-4 py-2 rounded text-center transition-transform duration-200 ${
-                  file ? "bg-teal-600 text-white scale-105" : "bg-teal-500 text-gray-900 hover:bg-teal-600"
-                }`}
-              >
-                {file ? file.name : "Choose File"}
-              </label>
-            </div>
-
-            {file && (
-              <button
-                type="button"
-                onClick={() => setFile(null)}
-                className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition"
-              >
-                Clear
-              </button>
+          {/* Upload area */}
+          <div
+            className={`flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-6 text-center transition-all duration-300 ${
+              file ? "border-teal-500 bg-gray-700/40" : "border-gray-600 hover:border-teal-400 hover:bg-gray-700/20"
+            }`}
+            onClick={() => document.getElementById("fileInput").click()}
+          >
+            <input
+              type="file"
+              id="fileInput"
+              className="hidden"
+              onChange={(e) => handleFileSelect(e.target.files[0])}
+            />
+            {!file ? (
+              <p className="text-gray-400">
+                {isDesktop ? "📂 Drag & drop (PC) or click to upload" : "📁 Tap to choose a file"}
+              </p>
+            ) : (
+              <div className="flex flex-col items-center">
+                {preview && (
+                  <img
+                    src={preview}
+                    alt="preview"
+                    className="w-24 h-24 object-contain mb-2 rounded"
+                  />
+                )}
+                <p className="text-gray-300 font-medium truncate max-w-[200px]">{file.name}</p>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setFile(null);
+                    setPreview(null);
+                  }}
+                  className="mt-2 px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition"
+                >
+                  Remove
+                </button>
+              </div>
             )}
           </div>
 
           {/* Submit */}
           <button
             type="submit"
-            className={`w-full py-2 rounded-lg font-semibold flex items-center justify-center gap-2 transition ${
+            className={`w-full py-2 rounded-lg font-semibold flex items-center justify-center gap-2 transition text-white ${
               loading ? "bg-gray-500 cursor-not-allowed" : "bg-teal-500 hover:bg-teal-600"
             }`}
             disabled={loading}
@@ -203,7 +255,7 @@ export default function SharePage() {
             {loading ? "Uploading..." : "Submit"}
           </button>
 
-          {/* Animated Toast */}
+          {/* Toast */}
           <div
             className={`fixed bottom-8 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded shadow-lg text-white transition-all duration-500 ${
               toast.show ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"

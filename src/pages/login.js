@@ -29,9 +29,9 @@ export default function Login() {
   return (
     <div
       ref={containerRef}
-      className="relative min-h-screen flex items-center justify-center bg-gradient-to-r from-purple-600 via-pink-500 to-red-500 overflow-hidden"
+      className="relative min-h-screen flex items-center justify-center bg-gradient-to-r from-purple-600 via-pink-500 to-red-500 overflow-hidden px-4"
     >
-      {/* Interactive particles */}
+      {/* Particles */}
       {Array.from({ length: particleCount }).map((_, i) => {
         const size = Math.random() * 80 + 20;
         const color = colors[Math.floor(Math.random() * colors.length)];
@@ -55,36 +55,36 @@ export default function Login() {
       })}
 
       {/* Glassmorphic card */}
-      <div className="relative z-10 bg-white/30 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl p-10 w-full max-w-sm text-center animate-card-fade">
+      <div className="relative z-10 bg-white/30 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl p-6 sm:p-10 w-full max-w-sm sm:max-w-md text-center animate-card-fade">
         <Image
           src="/note-icon.jpg"
           alt="Notes"
-          className="w-20 h-20 mx-auto mb-4"
+          className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4"
           width={80}
           height={80}
         />
-        <h1 className="text-3xl font-extrabold text-white drop-shadow-md">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-white drop-shadow-md">
           Note Manager
         </h1>
-        <p className="text-white/80 mt-2 mb-6">
+        <p className="text-white/80 mt-2 mb-6 text-sm sm:text-base">
           Sign in with Google to continue
         </p>
 
         <button
           onClick={() => signIn("google")}
-          className="flex items-center justify-center gap-3 w-full py-3 px-5 bg-white hover:bg-gray-100 text-gray-800 font-semibold rounded-xl shadow-lg transition-transform transform hover:scale-105 hover:shadow-2xl animate-bounce-slow"
+          className="flex items-center justify-center gap-2 sm:gap-3 w-full py-3 px-4 sm:px-5 bg-white hover:bg-gray-100 text-gray-800 font-semibold rounded-xl shadow-lg transition-transform transform hover:scale-105 hover:shadow-2xl animate-bounce-slow"
         >
           <Image
             src="https://www.svgrepo.com/show/355037/google.svg"
             alt="Google"
-            className="w-6 h-6"
-            width={80}
-            height={80}
+            className="w-5 h-5 sm:w-6 sm:h-6"
+            width={24}
+            height={24}
           />
-          Sign in with Google
+          <span className="text-sm sm:text-base">Sign in with Google</span>
         </button>
 
-        <p className="mt-6 text-white/70 text-xs">
+        <p className="mt-6 text-white/70 text-xs sm:text-sm px-2 sm:px-0">
           By signing in, you agree to our{" "}
           <span className="underline cursor-pointer">Terms</span> &{" "}
           <span className="underline cursor-pointer">Privacy Policy</span>.
