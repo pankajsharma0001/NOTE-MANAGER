@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
+import { syllabusData } from "./course"; // adjust import path if needed
 
 export default function Syllabus() {
   const { data: session } = useSession();
   const [selectedSubject, setSelectedSubject] = useState(null);
   const [greeting, setGreeting] = useState("");
+  const router = useRouter();
 
   // 🌅 Dynamic greeting
   useEffect(() => {
@@ -15,90 +17,6 @@ export default function Syllabus() {
     else setGreeting("Good Evening 🌙");
   }, []);
 
-  const thirdSemesterSubjects = [
-    {
-      code: "ARC 150",
-      name: "Building Technology",
-      examType: "Both",
-      theory: 80,
-      practical: 20,
-      total: 100,
-      details:
-        "Covers building materials, foundations, walls, floors, and structural systems used in construction engineering.",
-      pages: [1, 4],
-    },
-    {
-      code: "MTH 210",
-      name: "Calculus II",
-      examType: "Theory",
-      theory: 100,
-      practical: 0,
-      total: 100,
-      details:
-        "Advanced calculus applications including integration techniques, differential equations, and vector calculus.",
-      pages: [5, 8],
-    },
-    {
-      code: "WRE 212",
-      name: "Fluid Mechanics",
-      examType: "Both",
-      theory: 80,
-      practical: 20,
-      total: 100,
-      details:
-        "Covers fluid properties, pressure, flow measurement, and fluid statics/dynamics fundamental to hydraulic systems.",
-      pages: [9, 13],
-    },
-    {
-      code: "MTH 252",
-      name: "Numerical Methods",
-      examType: "Theory",
-      theory: 100,
-      practical: 0,
-      total: 100,
-      details:
-        "Techniques for solving engineering problems using iterative and computational numerical methods.",
-      pages: [14, 18],
-    },
-    {
-      code: "STR 210",
-      name: "Materials",
-      examType: "Both",
-      theory: 80,
-      practical: 20,
-      total: 100,
-      details:
-        "Studies the physical and mechanical properties of civil engineering materials such as concrete, steel, and timber.",
-      pages: [19, 23],
-    },
-    {
-      code: "CVL 216",
-      name: "Surveying I",
-      examType: "Both",
-      theory: 80,
-      practical: 20,
-      total: 100,
-      details:
-        "Principles and techniques of land surveying, including levelling, traversing, and distance measurement.",
-      pages: [24, 28],
-    },
-  ];
-
-  const pdfUrl = "/Civil_3rd_Sem_Syllabus_New.pdf";
-
-  const semesters = [
-    "First Semester",
-    "Second Semester",
-    "Third Semester",
-    "Fourth Semester",
-    "Fifth Semester",
-    "Sixth Semester",
-    "Seventh Semester",
-    "Eighth Semester",
-  ];
-
-  const router = useRouter();
-
   const sidebarItems = [
     { icon: "🏠", label: "Home", path: "/dashboard" },
     { icon: "📁", label: "Notes", path: "/notes" },
@@ -107,10 +25,12 @@ export default function Syllabus() {
     { icon: "🔗", label: "Share", path: "/share" },
   ];
 
+  const semesters = Object.keys(syllabusData);
+
   return (
-    <div className="flex bg-gray-900 text-gray-100">
+      <div className="flex bg-gray-900 text-gray-100 min-h-screen">
       {/* ✅ Fixed Sidebar */}
-      <aside className="w-20 bg-gray-950 text-white flex flex-col items-center py-6 space-y-6 fixed h-full">
+      <aside className="w-20 bg-gray-950 text-white flex flex-col items-center py-6 space-y-6 fixed left-0 top-0 h-full">
         {sidebarItems.map((item, index) => (
           <div key={index} className="relative w-full flex flex-col items-center">
             <button
@@ -126,8 +46,8 @@ export default function Syllabus() {
         ))}
       </aside>
 
-      {/* ✅ Scrollable Content */}
-      <main className="flex-1 ml-20 overflow-y-auto h-screen p-6">
+      {/* ✅ Main Content */}
+      <main className="flex-1 pl-20 p-6 overflow-y-auto">
         <div className="max-w-6xl mx-auto">
           {/* Greeting */}
           <div className="mb-8">
@@ -145,73 +65,80 @@ export default function Syllabus() {
             Course Structure for Bachelor’s Degree in Civil Engineering
           </h1>
 
-          {semesters.map((semester, index) => (
-            <div key={index} className="mb-10">
-              <h2 className="text-xl font-semibold mb-4 text-gray-300">
-                {semester}
-              </h2>
+          {/* Semester Tables */}
+          {semesters.map((semester, index) => {
+            const semData = syllabusData[semester];
 
-              {semester === "Third Semester" ? (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full bg-gray-800 rounded-lg overflow-hidden">
-                    <thead>
-                      <tr className="bg-gray-700 text-left">
-                        <th className="px-4 py-3">SUBJECT CODE</th>
-                        <th className="px-4 py-3">SUBJECT NAME</th>
-                        <th className="px-4 py-3">EXAM TYPE</th>
-                        <th className="px-4 py-3">THEORY</th>
-                        <th className="px-4 py-3">PRACTICAL</th>
-                        <th className="px-4 py-3">TOTAL</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {thirdSemesterSubjects.map((subj, i) => (
-                        <tr
-                          key={i}
-                          className="border-b border-gray-700 hover:bg-gray-700 cursor-pointer transition"
-                          onClick={() => setSelectedSubject(subj)}
-                        >
-                          <td className="px-4 py-3">{subj.code}</td>
-                          <td className="px-4 py-3 text-teal-400 hover:underline">
-                            {subj.name}
-                          </td>
-                          <td className="px-4 py-3">{subj.examType}</td>
-                          <td className="px-4 py-3">{subj.theory}</td>
-                          <td className="px-4 py-3">{subj.practical}</td>
-                          <td className="px-4 py-3">{subj.total}</td>
+            return (
+              <div key={index} className="mb-10">
+                <h2 className="text-xl font-semibold mb-4 text-gray-300">
+                  {semester}
+                </h2>
+
+                {semData ? (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full bg-gray-800 rounded-lg overflow-hidden">
+                      <thead>
+                        <tr className="bg-gray-700 text-left">
+                          <th className="px-4 py-3">SUBJECT CODE</th>
+                          <th className="px-4 py-3">SUBJECT NAME</th>
+                          <th className="px-4 py-3">EXAM TYPE</th>
+                          <th className="px-4 py-3">THEORY</th>
+                          <th className="px-4 py-3">PRACTICAL</th>
+                          <th className="px-4 py-3">TOTAL</th>
                         </tr>
-                      ))}
-                      <tr className="font-semibold bg-gray-700">
-                        <td className="px-4 py-3" colSpan="5">
-                          Total Marks
-                        </td>
-                        <td className="px-4 py-3">
-                          {thirdSemesterSubjects.reduce(
-                            (sum, subj) => sum + subj.total,
-                            0
-                          )}
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {semData.subjects.map((subj, i) => (
+                          <tr
+                            key={i}
+                            className="border-b border-gray-700 hover:bg-gray-700 cursor-pointer transition"
+                            onClick={() => setSelectedSubject(subj)}
+                          >
+                            <td className="px-4 py-3">{subj.code}</td>
+                            <td className="px-4 py-3 text-teal-400 hover:underline">
+                              {subj.name}
+                            </td>
+                            <td className="px-4 py-3">{subj.examType}</td>
+                            <td className="px-4 py-3">{subj.theory}</td>
+                            <td className="px-4 py-3">{subj.practical}</td>
+                            <td className="px-4 py-3">{subj.total}</td>
+                          </tr>
+                        ))}
+                        <tr className="font-semibold bg-gray-700">
+                          <td colSpan="5" className="px-4 py-3">
+                            Total Marks
+                          </td>
+                          <td className="px-4 py-3">
+                            {semData.subjects.reduce(
+                              (sum, subj) => sum + subj.total,
+                              0
+                            )}
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
 
-                  <div className="mt-3 text-sm">
-                    <a
-                      href={pdfUrl}
-                      download
-                      className="text-teal-400 hover:underline"
-                    >
-                      📥 Download Full Syllabus (PDF)
-                    </a>
+                    <div className="mt-3 text-sm">
+                      <a
+                        href={semData.pdfUrl}
+                        download
+                        className="text-teal-400 hover:underline"
+                      >
+                        📥 Download Full Syllabus (PDF)
+                      </a>
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <p className="text-gray-500 italic">Syllabus coming soon...</p>
-              )}
-            </div>
-          ))}
+                ) : (
+                  <p className="text-gray-500 italic">
+                    Syllabus coming soon...
+                  </p>
+                )}
+              </div>
+            );
+          })}
 
-          {/* ✅ Subject Modal (Details Only, No PDF Preview) */}
+          {/* ✅ Subject Modal */}
           {selectedSubject && (
             <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
               <div className="bg-gray-800 p-6 rounded-xl max-w-md w-full relative shadow-lg">
@@ -240,15 +167,17 @@ export default function Syllabus() {
                 <p className="text-gray-300 mb-2">
                   <strong>Total:</strong> {selectedSubject.total} Marks
                 </p>
-                <p className="text-gray-400 mt-3">
-                  {selectedSubject.details}
-                </p>
+                <p className="text-gray-400 mt-3">{selectedSubject.details}</p>
                 <p className="text-gray-500 mt-2 text-sm">
                   (Refer pages {selectedSubject.pages[0]}–{selectedSubject.pages[1]} in PDF)
                 </p>
 
                 <a
-                  href={pdfUrl}
+                  href={syllabusData[
+                    Object.keys(syllabusData).find((s) =>
+                      syllabusData[s].subjects.includes(selectedSubject)
+                    )
+                  ]?.pdfUrl}
                   download
                   className="mt-4 block text-center px-4 py-2 bg-teal-400 text-gray-900 font-semibold rounded-lg hover:bg-teal-500 transition"
                 >
