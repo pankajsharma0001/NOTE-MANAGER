@@ -1,83 +1,29 @@
-import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/router";
-import { syllabusData } from "./course"; // adjust import path if needed
+import { useState } from "react";
+import { syllabusData } from "../syllabus";
+import DashboardLayout from "../components/DashboardLayout";
 
 export default function Syllabus() {
-  const { data: session } = useSession();
   const [selectedSubject, setSelectedSubject] = useState(null);
-  const [greeting, setGreeting] = useState("");
-  const router = useRouter();
-
-  // 🌅 Dynamic greeting
-  useEffect(() => {
-    const hour = new Date().getHours();
-    if (hour < 12) setGreeting("Good Morning ☀️");
-    else if (hour < 18) setGreeting("Good Afternoon ☕");
-    else setGreeting("Good Evening 🌙");
-  }, []);
-
-  const sidebarItems = [
-    { icon: "🏠", label: "Home", path: "/dashboard" },
-    { icon: "📁", label: "Notes", path: "/notes" },
-    { icon: "⭐", label: "Favorites", path: "/favorites" },
-    { icon: "📖", label: "Syllabus", path: "/syllabus" },
-    { icon: "🔗", label: "Share", path: "/share" },
-  ];
-
   const semesters = Object.keys(syllabusData);
 
   return (
-      <div className="flex bg-gray-900 text-gray-100 min-h-screen">
-      {/* ✅ Fixed Sidebar */}
-      <aside className="w-20 bg-gray-950 text-white flex flex-col items-center py-6 space-y-6 fixed left-0 top-0 h-full">
-        {sidebarItems.map((item, index) => (
-          <div key={index} className="relative w-full flex flex-col items-center">
-            <button
-              className="p-3 rounded-lg hover:bg-gray-800 transition relative z-10"
-              onClick={() => router.push(item.path)}
-            >
-              <span role="img" aria-label={item.label}>
-                {item.icon}
-              </span>
-            </button>
-            <span className="text-xs mt-1">{item.label}</span>
-          </div>
-        ))}
-      </aside>
-
-      {/* ✅ Main Content */}
-      <main className="flex-1 pl-20 p-6 overflow-y-auto">
-        <div className="max-w-6xl mx-auto">
-          {/* Greeting */}
-          <div className="mb-8">
-            <h2 className="text-gray-400 text-lg">{greeting}</h2>
-            <h1 className="text-3xl font-bold text-white">
-              Welcome,{" "}
-              <span className="text-teal-400">
-                {session?.user?.name?.toUpperCase() || "Student"}
-              </span>
-            </h1>
-          </div>
-
-          {/* Title */}
+    <DashboardLayout>
+      <div className="w-full overflow-x-auto p-4">
+        <div className="max-w-[2000px] mx-auto">
           <h1 className="text-3xl font-bold mb-6 text-white">
-            Course Structure for Bachelor’s Degree in Civil Engineering
+            Course Structure for Bachelor&apos;s Degree in Civil Engineering
           </h1>
 
-          {/* Semester Tables */}
           {semesters.map((semester, index) => {
             const semData = syllabusData[semester];
 
             return (
               <div key={index} className="mb-10">
-                <h2 className="text-xl font-semibold mb-4 text-gray-300">
-                  {semester}
-                </h2>
+                <h2 className="text-xl font-semibold mb-4 text-gray-300">{semester}</h2>
 
                 {semData ? (
                   <div className="overflow-x-auto">
-                    <table className="min-w-full bg-gray-800 rounded-lg overflow-hidden">
+                    <table className="min-w-[800px] w-full bg-gray-800 rounded-lg overflow-hidden">
                       <thead>
                         <tr className="bg-gray-700 text-left">
                           <th className="px-4 py-3">SUBJECT CODE</th>
@@ -96,9 +42,7 @@ export default function Syllabus() {
                             onClick={() => setSelectedSubject(subj)}
                           >
                             <td className="px-4 py-3">{subj.code}</td>
-                            <td className="px-4 py-3 text-teal-400 hover:underline">
-                              {subj.name}
-                            </td>
+                            <td className="px-4 py-3 text-teal-400 hover:underline">{subj.name}</td>
                             <td className="px-4 py-3">{subj.examType}</td>
                             <td className="px-4 py-3">{subj.theory}</td>
                             <td className="px-4 py-3">{subj.practical}</td>
@@ -106,39 +50,28 @@ export default function Syllabus() {
                           </tr>
                         ))}
                         <tr className="font-semibold bg-gray-700">
-                          <td colSpan="5" className="px-4 py-3">
-                            Total Marks
-                          </td>
+                          <td colSpan="5" className="px-4 py-3">Total Marks</td>
                           <td className="px-4 py-3">
-                            {semData.subjects.reduce(
-                              (sum, subj) => sum + subj.total,
-                              0
-                            )}
+                            {semData.subjects.reduce((sum, subj) => sum + subj.total, 0)}
                           </td>
                         </tr>
                       </tbody>
                     </table>
 
                     <div className="mt-3 text-sm">
-                      <a
-                        href={semData.pdfUrl}
-                        download
-                        className="text-teal-400 hover:underline"
-                      >
+                      <a href={semData.pdfUrl} download className="text-teal-400 hover:underline">
                         📥 Download Full Syllabus (PDF)
                       </a>
                     </div>
                   </div>
                 ) : (
-                  <p className="text-gray-500 italic">
-                    Syllabus coming soon...
-                  </p>
+                  <p className="text-gray-500 italic">Syllabus coming soon...</p>
                 )}
               </div>
             );
           })}
 
-          {/* ✅ Subject Modal */}
+          {/* Subject Modal */}
           {selectedSubject && (
             <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
               <div className="bg-gray-800 p-6 rounded-xl max-w-md w-full relative shadow-lg">
@@ -148,30 +81,16 @@ export default function Syllabus() {
                 >
                   ✕
                 </button>
-
-                <h2 className="text-2xl font-bold text-teal-400 mb-3">
-                  {selectedSubject.name}
-                </h2>
-                <p className="text-gray-300 mb-2">
-                  <strong>Code:</strong> {selectedSubject.code}
-                </p>
-                <p className="text-gray-300 mb-2">
-                  <strong>Exam Type:</strong> {selectedSubject.examType}
-                </p>
-                <p className="text-gray-300 mb-2">
-                  <strong>Theory:</strong> {selectedSubject.theory} Marks
-                </p>
-                <p className="text-gray-300 mb-2">
-                  <strong>Practical:</strong> {selectedSubject.practical} Marks
-                </p>
-                <p className="text-gray-300 mb-2">
-                  <strong>Total:</strong> {selectedSubject.total} Marks
-                </p>
+                <h2 className="text-2xl font-bold text-teal-400 mb-3">{selectedSubject.name}</h2>
+                <p className="text-gray-300 mb-2"><strong>Code:</strong> {selectedSubject.code}</p>
+                <p className="text-gray-300 mb-2"><strong>Exam Type:</strong> {selectedSubject.examType}</p>
+                <p className="text-gray-300 mb-2"><strong>Theory:</strong> {selectedSubject.theory} Marks</p>
+                <p className="text-gray-300 mb-2"><strong>Practical:</strong> {selectedSubject.practical} Marks</p>
+                <p className="text-gray-300 mb-2"><strong>Total:</strong> {selectedSubject.total} Marks</p>
                 <p className="text-gray-400 mt-3">{selectedSubject.details}</p>
                 <p className="text-gray-500 mt-2 text-sm">
                   (Refer pages {selectedSubject.pages[0]}–{selectedSubject.pages[1]} in PDF)
                 </p>
-
                 <a
                   href={syllabusData[
                     Object.keys(syllabusData).find((s) =>
@@ -187,7 +106,7 @@ export default function Syllabus() {
             </div>
           )}
         </div>
-      </main>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }
