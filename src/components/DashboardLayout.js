@@ -97,10 +97,12 @@ export default function DashboardLayout({ children }) {
       {/* Main Content */}
       <main className="
               flex-1 
+              min-w-0       
               md:ml-16 ml-0 
-              md:px-8 px-4  /* <-- reduced horizontal padding on mobile */
+              md:px-8 px-4  
               md:pt-8 pt-2 
               md:pb-0 pb-12
+              overflow-x-hidden
             "
             key={router.asPath}
       >
