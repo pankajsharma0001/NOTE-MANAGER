@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import DashboardLayout from "../components/DashboardLayout";
+import Image from "next/image";
 
 export default function SharePage() {
   const { data: session } = useSession();
@@ -211,7 +212,7 @@ export default function SharePage() {
             ) : (
               <div className="flex flex-col items-center">
                 {preview && (
-                  <img
+                  <Image
                     src={preview}
                     alt="preview"
                     className="w-24 h-24 object-contain mb-2 rounded"

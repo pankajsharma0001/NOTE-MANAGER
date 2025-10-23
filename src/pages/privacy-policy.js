@@ -10,8 +10,8 @@ export default function PrivacyPolicy() {
         </h1>
 
         <p className="mb-4">
-          This Privacy Policy describes how <strong>Note Manager</strong> ("we",
-          "our", or "us") collects, uses, and protects your information when you
+          This Privacy Policy describes how <strong>Note Manager</strong> (&quot;we&quot;,
+          &quot;our&quot;, or &quot;us&quot;) collects, uses, and protects your information when you
           use our website and services.
         </p>
 
