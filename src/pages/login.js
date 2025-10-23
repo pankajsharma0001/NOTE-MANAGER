@@ -1,6 +1,7 @@
 import { signIn } from "next-auth/react";
 import { useEffect, useRef } from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Login() {
   const particleCount = 15;
@@ -84,10 +85,21 @@ export default function Login() {
           <span className="text-sm sm:text-base">Sign in with Google</span>
         </button>
 
-        <p className="mt-6 text-white/70 text-xs sm:text-sm px-2 sm:px-0">
+        {/* <p className="mt-6 text-white/70 text-xs sm:text-sm px-2 sm:px-0">
           By signing in, you agree to our{" "}
           <span className="underline cursor-pointer">Terms</span> &{" "}
           <span className="underline cursor-pointer">Privacy Policy</span>.
+        </p> */}
+
+        <p className="text-white/70 text-xs">
+          By signing in, you agree to our{" "}
+          <Link href="/terms" className="underline cursor-pointer">
+            Terms
+          </Link>{" "}
+          &{" "}
+          <Link href="/privacy-policy" className="underline cursor-pointer">
+            Privacy Policy
+          </Link>
         </p>
       </div>
 
