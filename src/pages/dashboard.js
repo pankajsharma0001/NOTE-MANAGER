@@ -257,18 +257,18 @@ export default function Dashboard() {
             {reminders.map((r, idx) => (
               <div
                 key={idx}
-                className="bg-gray-800 p-3 rounded-xl shadow mb-2 flex justify-between items-center text-sm sm:text-base"
+                className="bg-gray-800 p-3 rounded-xl shadow mb-2 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-sm sm:text-base"
               >
-                <span>{r.title}</span>
-                <div className="flex gap-2">
-                  <span>{new Date(r.time).toLocaleString()}</span>
+                <span className="font-medium">{r.title}</span>
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                  <span className="text-gray-400">{new Date(r.time).toLocaleString()}</span>
                   <a
                     href={`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
                       r.title
                     )}&dates=${formatForGoogleCalendar(r.time)}/${formatForGoogleCalendar(r.time)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-500 hover:underline text-xs sm:text-sm"
+                    className="text-blue-500 hover:underline text-xs sm:text-sm inline-block"
                   >
                     Add to Google Calendar
                   </a>
@@ -277,6 +277,72 @@ export default function Dashboard() {
             ))}
           </div>
         )}
+
+        <div className="text-center my-8">
+          <h3 className="text-xl sm:text-2xl font-semibold text-teal-400 mb-4">Connect with us or enjoy the games</h3>
+          <div className="h-1 w-24 bg-teal-400 mx-auto"></div>
+        </div>
+
+        {/* QR Codes Section */}
+        <section className="w-full mt-8 p-4 flex flex-wrap items-center justify-center sm:justify-end gap-6">
+          {/* Sudoko QR */}
+          <div className="flex flex-col items-center">
+            <a
+              href="https://sudoko-pro.vercel.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-white rounded-xl shadow-lg p-2 hover:scale-105 transition"
+            >
+              <img
+                src="/sudokoQR.png"
+                alt="Play Sudoko"
+                width={100}
+                height={100}
+                className="rounded w-[60px] h-[60px] sm:w-[100px] sm:h-[100px]"
+              />
+            </a>
+            <span className="mt-2 text-gray-300 font-semibold text-xs sm:text-sm">Sudoko</span>
+          </div>
+
+          {/* Memory Match QR */}
+          <div className="flex flex-col items-center">
+            <a
+              href="https://trilokey.com.np/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-white rounded-xl shadow-lg p-2 hover:scale-105 transition"
+            >
+              <img
+                src="/memoryMatchQR.png"
+                alt="Play Memory Match"
+                width={100}
+                height={100}
+                className="rounded w-[60px] h-[60px] sm:w-[100px] sm:h-[100px]"
+              />
+            </a>
+            <span className="mt-2 text-gray-300 font-semibold text-xs sm:text-sm">Memory Match</span>
+          </div>
+
+          {/* WhatsApp QR */}
+          <div className="flex flex-col items-center">
+            <a
+              href="https://chat.whatsapp.com/BiJgWxfsEFA7gjQcqS0Nct"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-white rounded-xl shadow-lg p-2 hover:scale-105 transition"
+            >
+              <img
+                src="/whatsappQR.png"
+                alt="Join WhatsApp"
+                width={100}
+                height={100}
+                className="rounded w-[60px] h-[60px] sm:w-[100px] sm:h-[100px]"
+              />
+            </a>
+            <span className="mt-2 text-gray-300 font-semibold text-xs sm:text-sm">WhatsApp</span>
+          </div>
+
+        </section>
       </section>
     </DashboardLayout>
   );
