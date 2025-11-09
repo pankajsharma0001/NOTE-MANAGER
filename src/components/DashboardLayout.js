@@ -28,7 +28,7 @@ export default function DashboardLayout({ children }) {
   ];
 
   // Admin only
-  const adminEmails = ["sharmapankaj102030@gmail.com"];
+  const adminEmails = ["sharmapankaj102030@gmail.com", "engineeringnotez@gmail.com"];
   if (session?.user?.email && adminEmails.includes(session.user.email)) {
     sidebarItems.push({
       icon: "📝",

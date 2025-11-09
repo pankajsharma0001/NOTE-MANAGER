@@ -87,9 +87,31 @@ export default function Semester() {
         </div>
 
         <div className="flex flex-col lg:flex-row flex-1 gap-4 overflow-hidden mt-4 px-4">
-          {/* Sidebar - with wrapping subjects */}
-          <div className="lg:w-48 bg-gray-900 p-4 rounded-lg overflow-y-auto">
-            <div className="flex flex-wrap lg:flex-col gap-2">
+          {/* Sidebar - Dropdown for mobile, buttons for desktop */}
+          <div className="lg:w-48 bg-gray-900 p-4 rounded-lg relative">
+            {/* Mobile Dropdown */}
+            <div className="relative lg:hidden">
+              <select 
+                className="w-full p-2 rounded bg-gray-700 text-gray-300 mb-4 appearance-none"
+                value={selectedSubject}
+                onChange={(e) => setSelectedSubject(e.target.value)}
+              >
+                {subjectsBySemester[semester]?.map(subject => (
+                  <option key={subject} value={subject}>
+                    {subject}
+                  </option>
+                ))}
+              </select>
+              {/* Custom dropdown arrow */}
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-300">
+                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                  <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/>
+                </svg>
+              </div>
+            </div>
+
+            {/* Desktop Button List */}
+            <div className="hidden lg:flex lg:flex-col gap-2">
               {subjectsBySemester[semester]?.map(subject => (
                 <button
                   key={subject}
