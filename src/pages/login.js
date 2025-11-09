@@ -1,14 +1,23 @@
-import { signIn } from "next-auth/react";
+import { signIn, getSession } from "next-auth/react";
 import { useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/router";
 
 export default function Login() {
+  const router = useRouter();
   const particleCount = 15;
   const colors = ["#ffffff40", "#fffc40", "#40ffc3", "#ff40b3"];
   const containerRef = useRef(null);
 
   useEffect(() => {
+    // Check if user is already logged in
+    getSession().then((session) => {
+      if (session) {
+        router.push("/dashboard");
+      }
+    });
+
     const particles = containerRef.current.querySelectorAll(".particle");
     const handleMouseMove = (e) => {
       particles.forEach((p) => {
@@ -25,7 +34,18 @@ export default function Login() {
     };
     window.addEventListener("mousemove", handleMouseMove);
     return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, []);
+  }, [router]);
+
+  const handleSignIn = async () => {
+    try {
+      const result = await signIn("google", {
+        callbackUrl: "/dashboard",
+        redirect: true,
+      });
+    } catch (error) {
+      console.error("Login error:", error);
+    }
+  };
 
   return (
     <div
@@ -72,7 +92,7 @@ export default function Login() {
         </p>
 
         <button
-          onClick={() => signIn("google")}
+          onClick={handleSignIn}
           className="flex items-center justify-center gap-2 sm:gap-3 w-full py-3 px-4 sm:px-5 bg-white hover:bg-gray-100 text-gray-800 font-semibold rounded-xl shadow-lg transition-transform transform hover:scale-105 hover:shadow-2xl animate-bounce-slow"
         >
           <Image
@@ -85,13 +105,7 @@ export default function Login() {
           <span className="text-sm sm:text-base">Sign in with Google</span>
         </button>
 
-        {/* <p className="mt-6 text-white/70 text-xs sm:text-sm px-2 sm:px-0">
-          By signing in, you agree to our{" "}
-          <span className="underline cursor-pointer">Terms</span> &{" "}
-          <span className="underline cursor-pointer">Privacy Policy</span>.
-        </p> */}
-
-        <p className="text-white/70 text-xs">
+        <p className="text-white/70 text-xs mt-6">
           By signing in, you agree to our{" "}
           <Link href="/terms" className="underline cursor-pointer">
             Terms
