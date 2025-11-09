@@ -8,13 +8,6 @@ export const authOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      authorization: {
-        params: {
-          prompt: "consent",
-          access_type: "offline",
-          response_type: "code"
-        }
-      }
     }),
   ],
 
@@ -37,7 +30,6 @@ export const authOptions = {
         sameSite: "lax",
         path: "/",
         secure: true, // Always true in production
-        domain: process.env.NODE_ENV === 'production' ? '.vercel.app' : 'localhost'
       },
     },
   },
@@ -111,16 +103,22 @@ export const authOptions = {
     },
 
     async redirect({ url, baseUrl }) {
-      // Allows relative callback URLs
-      if (url.startsWith("/")) return `${baseUrl}${url}`;
-      // Allows callback URLs on the same origin
-      else if (new URL(url).origin === baseUrl) return url;
-      return baseUrl + "/dashboard";
+      // Handle redirects properly
+      if (url.startsWith("/")) {
+        return `${baseUrl}${url}`;
+      } else if (new URL(url).origin === baseUrl) {
+        return url;
+      }
+      return baseUrl;
+    },
+
+    // Add signIn callback to ensure successful sign-in
+    async signIn({ user, account, profile }) {
+      return true;
     },
   },
 
   // Vercel-specific settings
-  useSecureCookies: process.env.NODE_ENV === "production",
   trustHost: true,
 };
 
