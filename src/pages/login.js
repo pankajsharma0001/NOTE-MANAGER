@@ -1,10 +1,11 @@
 import { signIn, getSession } from "next-auth/react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 
 export default function Login() {
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const particleCount = 15;
   const colors = ["#ffffff40", "#fffc40", "#40ffc3", "#ff40b3"];
@@ -38,12 +39,14 @@ export default function Login() {
 
   const handleSignIn = async () => {
     try {
+      setIsLoading(true);
       const result = await signIn("google", {
         callbackUrl: "/dashboard",
         redirect: true,
       });
     } catch (error) {
       console.error("Login error:", error);
+      setIsLoading(false);
     }
   };
 
@@ -93,16 +96,23 @@ export default function Login() {
 
         <button
           onClick={handleSignIn}
-          className="flex items-center justify-center gap-2 sm:gap-3 w-full py-3 px-4 sm:px-5 bg-white hover:bg-gray-100 text-gray-800 font-semibold rounded-xl shadow-lg transition-transform transform hover:scale-105 hover:shadow-2xl animate-bounce-slow"
+          disabled={isLoading}
+          className="flex items-center justify-center gap-2 sm:gap-3 w-full py-3 px-4 sm:px-5 bg-white/90 hover:bg-white/95 text-gray-800 font-semibold rounded-xl shadow-lg transition-all transform hover:scale-105 hover:shadow-2xl animate-bounce-slow disabled:opacity-75 disabled:cursor-not-allowed"
         >
-          <Image
-            src="https://www.svgrepo.com/show/355037/google.svg"
-            alt="Google"
-            className="w-5 h-5 sm:w-6 sm:h-6"
-            width={24}
-            height={24}
-          />
-          <span className="text-sm sm:text-base">Sign in with Google</span>
+          {isLoading ? (
+            <div className="w-5 h-5 sm:w-6 sm:h-6 border-2 border-gray-800 border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <Image
+              src="https://www.svgrepo.com/show/355037/google.svg"
+              alt="Google"
+              className="w-5 h-5 sm:w-6 sm:h-6"
+              width={24}
+              height={24}
+            />
+          )}
+          <span className="text-sm sm:text-base">
+            {isLoading ? "Signing in..." : "Sign in with Google"}
+          </span>
         </button>
 
         <p className="text-white/70 text-xs mt-6">
