@@ -12,7 +12,7 @@ export default function Dashboard() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [showProfilePrompt, setShowProfilePrompt] = useState(false);
   const [stats, setStats] = useState({ percentCompleted: 0, lastReadNote: null });
-  const [isClient, setIsClient] = useState(false);
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
   const dropdownRef = useRef();
 
   // Reminder states
@@ -20,11 +20,6 @@ export default function Dashboard() {
   const [reminderTime, setReminderTime] = useState(null);
   const [reminderTitle, setReminderTitle] = useState("Study Session");
   const [reminders, setReminders] = useState([]);
-
-   // Set client-side flag
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   const timeSince = (date) => {
     if (!date) return "";
@@ -47,8 +42,50 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    if (session?.user?.id) fetchStats();
-  }, [session]);
+    const synchronizeSession = async () => {
+      console.log("🔄 Session sync started. Status:", status);
+      
+      // If session is loading, wait for it
+      if (status === "loading") {
+        console.log("⏳ Session is loading...");
+        return;
+      }
+
+      // If we have a session, everything is fine
+      if (status === "authenticated" && session) {
+        console.log("✅ Session found:", session.user.email);
+        setIsCheckingSession(false);
+        await fetchStats();
+        return;
+      }
+
+      // If no session but we might have a cookie, try to recover
+      if (status === "unauthenticated") {
+        console.log("🔍 No session found, checking for stored session cookie...");
+        
+        try {
+          const storedSession = await getSession();
+          
+          if (storedSession) {
+            console.log("🎉 Stored session found in cookies:", storedSession.user.email);
+            // Force update the session state
+            await update();
+            setIsCheckingSession(false);
+          } else {
+            console.log("❌ No stored session found, redirecting to login");
+            setIsCheckingSession(false);
+            router.push("/login");
+          }
+        } catch (error) {
+          console.error("Error checking session:", error);
+          setIsCheckingSession(false);
+          router.push("/login");
+        }
+      }
+    };
+
+    synchronizeSession();
+  }, [status, session, router]);
 
   useEffect(() => {
     const handleNoteRead = () => fetchStats();
@@ -56,27 +93,6 @@ export default function Dashboard() {
     return () => window.removeEventListener("noteRead", handleNoteRead);
   }, [session]);
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      // If no session but we're on client side, try to get session
-      if (status === "unauthenticated" && isClient) {
-        console.log("No session found, checking for stored session...");
-        
-        // Try to manually get session
-        const storedSession = await getSession();
-        if (!storedSession) {
-          console.log("No stored session found, redirecting to login");
-          router.push("/login");
-        } else {
-          console.log("Stored session found:", storedSession.user.email);
-          // Session exists but wasn't loaded, refresh the page to trigger proper loading
-          window.location.reload();
-        }
-      }
-    };
-
-    checkAuth();
-  }, [status, isClient, router]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -89,40 +105,35 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    if (status === "authenticated" && session?.user && !session.user.profileComplete) {
-      setShowProfilePrompt(true);
-    } else {
-      setShowProfilePrompt(false);
+    if (status === "authenticated" && session?.user) {
+      if (!session.user.profileComplete) {
+        setShowProfilePrompt(true);
+      } else {
+        setShowProfilePrompt(false);
+      }
     }
   }, [status, session]);
 
-  // Show loading state
-  if (status === "loading") {
+  // Show loading while checking session
+  if (isCheckingSession || status === "loading") {
     return (
       <DashboardLayout>
         <div className="min-h-screen flex items-center justify-center">
-          <p className="text-white text-lg">Loading your dashboard...</p>
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-400 mx-auto mb-4"></div>
+            <p className="text-white text-lg">Restoring your session...</p>
+          </div>
         </div>
       </DashboardLayout>
     );
   }
 
-  // Don't render until we know if we have a session
-  if (!isClient || status === "unauthenticated") {
-    return (
-      <DashboardLayout>
-        <div className="min-h-screen flex items-center justify-center">
-          <p className="text-white text-lg">Checking authentication...</p>
-        </div>
-      </DashboardLayout>
-    );
-  }
-
+  // Redirect if no session after checking
   if (!session) {
     return (
       <DashboardLayout>
         <div className="min-h-screen flex items-center justify-center">
-          <p className="text-white text-lg">No session found. Redirecting...</p>
+          <p className="text-white text-lg">Redirecting to login...</p>
         </div>
       </DashboardLayout>
     );
