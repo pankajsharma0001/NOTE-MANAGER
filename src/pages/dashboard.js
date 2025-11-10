@@ -1,4 +1,4 @@
-import { useSession, signOut } from "next-auth/react";
+import { useSession, signOut, getSession } from "next-auth/react";
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/router";
 import Profile from "./profile";
@@ -12,6 +12,7 @@ export default function Dashboard() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [showProfilePrompt, setShowProfilePrompt] = useState(false);
   const [stats, setStats] = useState({ percentCompleted: 0, lastReadNote: null });
+  const [isClient, setIsClient] = useState(false);
   const dropdownRef = useRef();
 
   // Reminder states
@@ -19,6 +20,11 @@ export default function Dashboard() {
   const [reminderTime, setReminderTime] = useState(null);
   const [reminderTitle, setReminderTitle] = useState("Study Session");
   const [reminders, setReminders] = useState([]);
+
+   // Set client-side flag
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const timeSince = (date) => {
     if (!date) return "";
@@ -51,8 +57,28 @@ export default function Dashboard() {
   }, [session]);
 
   useEffect(() => {
-    if (status === "unauthenticated") router.push("/login");
+    const checkAuth = async () => {
+      // If no session but we're on client side, try to get session
+      if (status === "unauthenticated" && isClient) {
+        console.log("No session found, checking for stored session...");
+        
+        // Try to manually get session
+        const storedSession = await getSession();
+        if (!storedSession) {
+          console.log("No stored session found, redirecting to login");
+          router.push("/login");
+        } else {
+          console.log("Stored session found:", storedSession.user.email);
+          // Session exists but wasn't loaded, refresh the page to trigger proper loading
+          window.location.reload();
+        }
+      }
+    };
 
+    checkAuth();
+  }, [status, isClient, router]);
+
+  useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setDropdownOpen(false);
@@ -60,18 +86,47 @@ export default function Dashboard() {
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [status, router]);
+  }, []);
 
   useEffect(() => {
-    if (status === "authenticated" && !session?.user?.profileComplete) {
+    if (status === "authenticated" && session?.user && !session.user.profileComplete) {
       setShowProfilePrompt(true);
     } else {
       setShowProfilePrompt(false);
     }
   }, [status, session]);
 
-  if (status === "loading") return <p>Loading...</p>;
-  if (!session) return null;
+  // Show loading state
+  if (status === "loading") {
+    return (
+      <DashboardLayout>
+        <div className="min-h-screen flex items-center justify-center">
+          <p className="text-white text-lg">Loading your dashboard...</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Don't render until we know if we have a session
+  if (!isClient || status === "unauthenticated") {
+    return (
+      <DashboardLayout>
+        <div className="min-h-screen flex items-center justify-center">
+          <p className="text-white text-lg">Checking authentication...</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!session) {
+    return (
+      <DashboardLayout>
+        <div className="min-h-screen flex items-center justify-center">
+          <p className="text-white text-lg">No session found. Redirecting...</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   const handleProfileComplete = async (updatedUserData) => {
     await update({
