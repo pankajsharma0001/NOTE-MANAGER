@@ -21,15 +21,15 @@ export const authOptions = {
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
 
-  // Production cookie settings for Vercel
+   // Simplified cookie configuration
   cookies: {
     sessionToken: {
-      name: `__Secure-next-auth.session-token`,
+      name: `next-auth.session-token`,
       options: {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        secure: true, // Always true in production
+        secure: true,
       },
     },
   },
@@ -77,7 +77,7 @@ export const authOptions = {
           token.lastReadNote = freshUser.lastReadNote || null;
           token.lastReadAt = freshUser.lastReadAt || null;
           token.profileComplete = freshUser.profileComplete || false;
-        }
+        };
       }
 
       return token;
@@ -103,18 +103,11 @@ export const authOptions = {
     },
 
     async redirect({ url, baseUrl }) {
-      // Handle redirects properly
       if (url.startsWith("/")) {
         return `${baseUrl}${url}`;
-      } else if (new URL(url).origin === baseUrl) {
-        return url;
       }
-      return baseUrl;
-    },
-
-    // Add signIn callback to ensure successful sign-in
-    async signIn({ user, account, profile }) {
-      return true;
+      // Default to dashboard
+      return `${baseUrl}/dashboard`;
     },
   },
 
