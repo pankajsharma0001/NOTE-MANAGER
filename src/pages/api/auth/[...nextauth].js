@@ -18,6 +18,11 @@ export const authOptions = {
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
+    updateAge: 24 * 60 * 60, // Update session every 24 hours
+  },
+
+  jwt: {
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
 
   secret: process.env.NEXTAUTH_SECRET,
@@ -41,13 +46,15 @@ export const authOptions = {
           await user.save();
         }
 
-        token.sub = user._id.toString(); // Use 'sub' like Typing Game
+        token.sub = user._id.toString();
+        token.email = profile.email;
+        token.name = profile.name;
+        token.picture = profile.picture;
       }
 
       return token;
     },
 
-    // FIXED: Always fetch fresh data from database like Typing Game
     async session({ session, token }) {
       if (token?.sub) {
         await connectMongo();
@@ -82,6 +89,7 @@ export const authOptions = {
   },
 
   trustHost: true,
+  useSecureCookies: process.env.NEXTAUTH_URL?.startsWith("https"),
 };
 
 export default NextAuth(authOptions);
