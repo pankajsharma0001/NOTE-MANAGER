@@ -5,6 +5,7 @@ import Profile from "./profile";
 import DashboardLayout from "../components/DashboardLayout";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import Image from "next/image";
 
 export default function Dashboard() {
   const { data: session, status, update } = useSession();
@@ -359,7 +360,7 @@ export default function Dashboard() {
               rel="noopener noreferrer"
               className="bg-white rounded-xl shadow-lg p-2 hover:scale-105 transition"
             >
-              <img
+              <Image
                 src="/sudokoQR.png"
                 alt="Play Sudoko"
                 width={100}
@@ -378,7 +379,7 @@ export default function Dashboard() {
               rel="noopener noreferrer"
               className="bg-white rounded-xl shadow-lg p-2 hover:scale-105 transition"
             >
-              <img
+              <Image
                 src="/memoryMatchQR.png"
                 alt="Play Memory Match"
                 width={100}
@@ -397,7 +398,7 @@ export default function Dashboard() {
               rel="noopener noreferrer"
               className="bg-white rounded-xl shadow-lg p-2 hover:scale-105 transition"
             >
-              <img
+              <Image
                 src="/whatsappQR.png"
                 alt="Join WhatsApp"
                 width={100}
