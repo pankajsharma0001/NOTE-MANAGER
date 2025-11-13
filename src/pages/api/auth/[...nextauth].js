@@ -15,13 +15,12 @@ export const authOptions = {
     signIn: "/login",
   },
 
-  // Vercel-specific session configuration
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
 
-   // Simplified cookie configuration
+  // Remove custom cookie configuration - let NextAuth handle it
   cookies: {
     sessionToken: {
       name: `next-auth.session-token`,
@@ -29,7 +28,7 @@ export const authOptions = {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        secure: true,
+        secure: process.env.NODE_ENV === "production",
       },
     },
   },
@@ -38,10 +37,10 @@ export const authOptions = {
 
   callbacks: {
     async jwt({ token, account, profile }) {
-      await connectMongo();
-
-      // First login/signup
+      // Only connect to DB for initial sign-in
       if (account && profile) {
+        await connectMongo();
+
         let user = await User.findOne({ email: profile.email });
 
         if (!user) {
@@ -51,67 +50,50 @@ export const authOptions = {
             image: profile.picture,
           });
         } else {
-          // Increment login count
           user.loginCount = (user.loginCount || 0) + 1;
           await user.save();
         }
 
-        token.userId = user._id.toString();
-      }
-
-      // Always fetch latest data from DB
-      if (token.userId) {
-        const freshUser = await User.findById(token.userId).lean();
-        if (freshUser) {
-          token.name = freshUser.name;
-          token.email = freshUser.email;
-          token.image = freshUser.image;
-          token.role = ["sharmapankaj102030@gmail.com"].includes(freshUser.email)
-            ? "admin"
-            : "user";
-          token.semester = freshUser.semester || "";
-          token.college = freshUser.college || "";
-          token.address = freshUser.address || "";
-          token.phone = freshUser.phone || "";
-          token.loginCount = freshUser.loginCount || 0;
-          token.lastReadNote = freshUser.lastReadNote || null;
-          token.lastReadAt = freshUser.lastReadAt || null;
-          token.profileComplete = freshUser.profileComplete || false;
-        };
+        token.sub = user._id.toString(); // Use 'sub' like Typing Game
       }
 
       return token;
     },
 
+    // FIXED: Always fetch fresh data from database like Typing Game
     async session({ session, token }) {
-      if (token) {
-        session.user.id = token.userId;
-        session.user.name = token.name;
-        session.user.email = token.email;
-        session.user.image = token.image;
-        session.user.role = token.role;
-        session.user.semester = token.semester;
-        session.user.college = token.college;
-        session.user.address = token.address;
-        session.user.phone = token.phone;
-        session.user.loginCount = token.loginCount;
-        session.user.lastReadNote = token.lastReadNote;
-        session.user.lastReadAt = token.lastReadAt;
-        session.user.profileComplete = token.profileComplete;
+      if (token?.sub) {
+        await connectMongo();
+        const user = await User.findById(token.sub).lean();
+        
+        if (user) {
+          session.user = {
+            id: user._id.toString(),
+            name: user.name,
+            email: user.email,
+            image: user.image,
+            role: ["sharmapankaj102030@gmail.com"].includes(user.email) ? "admin" : "user",
+            semester: user.semester || "",
+            college: user.college || "",
+            address: user.address || "",
+            phone: user.phone || "",
+            loginCount: user.loginCount || 0,
+            lastReadNote: user.lastReadNote || null,
+            lastReadAt: user.lastReadAt || null,
+            profileComplete: user.profileComplete || false,
+          };
+        }
       }
       return session;
     },
 
     async redirect({ url, baseUrl }) {
-      if (url.startsWith("/")) {
-        return `${baseUrl}${url}`;
-      }
-      // Default to dashboard
-      return `${baseUrl}/dashboard`;
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      else if (new URL(url).origin === baseUrl) return url;
+      return baseUrl + "/dashboard";
     },
   },
 
-  // Vercel-specific settings
   trustHost: true,
 };
 
