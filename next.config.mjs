@@ -21,6 +21,7 @@ const nextConfig = {
       },
     ],
   },
+  turbopack: {},
 };
 
 // ✅ Export wrapped config
