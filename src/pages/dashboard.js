@@ -1,5 +1,5 @@
-import { useSession, signOut, getSession } from "next-auth/react";
-import { useEffect, useState, useRef } from "react";
+import { useSession } from "next-auth/react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import { useRouter } from "next/router";
 import Profile from "./profile";
 import DashboardLayout from "../components/DashboardLayout";
@@ -13,7 +13,6 @@ export default function Dashboard() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [showProfilePrompt, setShowProfilePrompt] = useState(false);
   const [stats, setStats] = useState({ percentCompleted: 0, lastReadNote: null });
-  const [isCheckingSession, setIsCheckingSession] = useState(true);
   const dropdownRef = useRef();
 
   // Reminder states
@@ -31,68 +30,27 @@ export default function Dashboard() {
     return `${Math.floor(diff / 86400)} days ago`;
   };
 
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     if (!session?.user?.id) return;
     try {
-      const res = await fetch(`/api/user/stats?userId=${session.user.id}`);
+      const res = await fetch("/api/user/stats");
       const data = await res.json();
       if (!data.error) setStats(data);
     } catch (err) {
       console.error("Failed to fetch stats:", err);
     }
-  };
+  }, [session?.user?.id]);
 
   useEffect(() => {
-    const synchronizeSession = async () => {
-      console.log("🔄 Session sync started. Status:", status);
-      
-      // If session is loading, wait for it
-      if (status === "loading") {
-        console.log("⏳ Session is loading...");
-        return;
-      }
-
-      // If we have a session, everything is fine
-      if (status === "authenticated" && session) {
-        console.log("✅ Session found:", session.user.email);
-        setIsCheckingSession(false);
-        await fetchStats();
-        return;
-      }
-
-      // If no session but we might have a cookie, try to recover
-      if (status === "unauthenticated") {
-        console.log("🔍 No session found, checking for stored session cookie...");
-        
-        try {
-          const storedSession = await getSession();
-          
-          if (storedSession) {
-            console.log("🎉 Stored session found in cookies:", storedSession.user.email);
-            // Force update the session state
-            await update();
-            setIsCheckingSession(false);
-          } else {
-            console.log("❌ No stored session found, redirecting to login");
-            setIsCheckingSession(false);
-            router.push("/login");
-          }
-        } catch (error) {
-          console.error("Error checking session:", error);
-          setIsCheckingSession(false);
-          router.push("/login");
-        }
-      }
-    };
-
-    synchronizeSession();
-  }, [status, session, router]);
+    if (status === "authenticated") fetchStats();
+    if (status === "unauthenticated") router.replace("/login");
+  }, [status, router, fetchStats]);
 
   useEffect(() => {
     const handleNoteRead = () => fetchStats();
     window.addEventListener("noteRead", handleNoteRead);
     return () => window.removeEventListener("noteRead", handleNoteRead);
-  }, [session]);
+  }, [fetchStats]);
 
 
   useEffect(() => {
@@ -116,13 +74,13 @@ export default function Dashboard() {
   }, [status, session]);
 
   // Show loading while checking session
-  if (isCheckingSession || status === "loading") {
+  if (status === "loading") {
     return (
       <DashboardLayout>
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-400 mx-auto mb-4"></div>
-            <p className="text-white text-lg">Restoring your session...</p>
+            <p className="text-white text-lg">Checking your session...</p>
           </div>
         </div>
       </DashboardLayout>
@@ -414,3 +372,4 @@ export default function Dashboard() {
     </DashboardLayout>
   );
 }
+

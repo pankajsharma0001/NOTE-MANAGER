@@ -1,8 +1,6 @@
-import { useSession } from "next-auth/react";
 import { useState } from "react";
 
 export default function UploadPage() {
-  const { data: session } = useSession();   // ✅ Get session
   const [form, setForm] = useState({
     title: "",
     subject: "",
@@ -23,11 +21,6 @@ export default function UploadPage() {
       formData.append(key, form[key]);
     });
 
-    // ✅ Send userId to the API
-    if (session?.user?.id) {
-      formData.append("userId", session.user.id);
-    }
-
     if (file) formData.append("file", file);
 
     const res = await fetch("/api/share/upload", {
@@ -36,7 +29,7 @@ export default function UploadPage() {
     });
 
     const data = await res.json();
-    setMessage(data.success ? "✅ Note uploaded successfully!" : "❌ Upload failed!");
+    setMessage(data.success ? "Note uploaded successfully!" : "Upload failed!");
   };
 
   return (
@@ -80,6 +73,7 @@ export default function UploadPage() {
 
         <input
           type="file"
+          accept="application/pdf,image/jpeg,image/png,image/webp"
           onChange={(e) => setFile(e.target.files[0])}
           className="w-full text-gray-300"
         />

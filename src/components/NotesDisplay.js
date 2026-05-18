@@ -38,7 +38,7 @@ export default function NotesDisplay({ semester }) {
           )}`
         );
         const data = await res.json();
-        setNotes(data.notes || []);
+        setNotes(data.data || []);
       } catch (err) {
         console.error(err);
         setNotes([]);

@@ -1,11 +1,16 @@
 import {connectMongo} from "../../../../lib/mongodb";
 import PendingNote from "../../../../models/PendingNote";
+import { requireAdmin } from "../../../../lib/serverAuth";
+import { noStore } from "../../../../lib/apiCache";
 
 export default async function handler(req, res) {
-  await connectMongo();
-  const { id } = req.query;
-
+  noStore(res);
   if (req.method === "POST") {
+    if (!(await requireAdmin(req, res))) return;
+
+    await connectMongo();
+    const { id } = req.query;
+
     try {
       // Remove from PendingNote
       await PendingNote.findByIdAndDelete(id);

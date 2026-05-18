@@ -1,24 +1,34 @@
-import { signIn, getSession } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 
+const particleColors = ["#ffffff40", "#fffc40", "#40ffc3", "#ff40b3"];
+const particles = Array.from({ length: 15 }, (_, i) => {
+  const n = i + 1;
+  return {
+    size: 24 + ((n * 37) % 72),
+    color: particleColors[(n * 5) % particleColors.length],
+    top: (n * 19) % 96,
+    left: (n * 29) % 96,
+    delay: ((n * 11) % 50) / 10,
+  };
+});
+
 export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
+  const { status } = useSession();
   const router = useRouter();
-  const particleCount = 15;
-  const colors = ["#ffffff40", "#fffc40", "#40ffc3", "#ff40b3"];
   const containerRef = useRef(null);
 
   useEffect(() => {
-    // Check if user is already logged in
-    getSession().then((session) => {
-      if (session) {
-        router.push("/dashboard");
-      }
-    });
+    if (status === "authenticated") {
+      router.replace("/dashboard");
+    }
+  }, [status, router]);
 
+  useEffect(() => {
     const particles = containerRef.current.querySelectorAll(".particle");
     const handleMouseMove = (e) => {
       particles.forEach((p) => {
@@ -35,7 +45,7 @@ export default function Login() {
     };
     window.addEventListener("mousemove", handleMouseMove);
     return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, [router]);
+  }, []);
 
   const handleSignIn = async () => {
     try {
@@ -56,27 +66,20 @@ export default function Login() {
       className="relative min-h-screen flex items-center justify-center bg-gradient-to-r from-purple-600 via-pink-500 to-red-500 overflow-hidden px-4"
     >
       {/* Particles */}
-      {Array.from({ length: particleCount }).map((_, i) => {
-        const size = Math.random() * 80 + 20;
-        const color = colors[Math.floor(Math.random() * colors.length)];
-        const top = Math.random() * 100;
-        const left = Math.random() * 100;
-        const delay = Math.random() * 5;
-        return (
-          <div
-            key={i}
-            className="absolute rounded-full particle animate-float"
-            style={{
-              width: `${size}px`,
-              height: `${size}px`,
-              top: `${top}%`,
-              left: `${left}%`,
-              backgroundColor: color,
-              animationDelay: `${delay}s`,
-            }}
-          />
-        );
-      })}
+      {particles.map((particle, i) => (
+        <div
+          key={i}
+          className="absolute rounded-full particle animate-float"
+          style={{
+            width: `${particle.size}px`,
+            height: `${particle.size}px`,
+            top: `${particle.top}%`,
+            left: `${particle.left}%`,
+            backgroundColor: particle.color,
+            animationDelay: `${particle.delay}s`,
+          }}
+        />
+      ))}
 
       {/* Glassmorphic card */}
       <div className="relative z-10 bg-white/30 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl p-6 sm:p-10 w-full max-w-sm sm:max-w-md text-center animate-card-fade">
@@ -96,7 +99,7 @@ export default function Login() {
 
         <button
           onClick={handleSignIn}
-          disabled={isLoading}
+          disabled={isLoading || status === "loading"}
           className="flex items-center justify-center gap-2 sm:gap-3 w-full py-3 px-4 sm:px-5 bg-white/90 hover:bg-white/95 text-gray-800 font-semibold rounded-xl shadow-lg transition-all transform hover:scale-105 hover:shadow-2xl animate-bounce-slow disabled:opacity-75 disabled:cursor-not-allowed"
         >
           {isLoading ? (
@@ -111,7 +114,7 @@ export default function Login() {
             />
           )}
           <span className="text-sm sm:text-base">
-            {isLoading ? "Signing in..." : "Sign in with Google"}
+            {isLoading || status === "loading" ? "Checking session..." : "Sign in with Google"}
           </span>
         </button>
 

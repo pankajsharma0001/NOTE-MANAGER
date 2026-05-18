@@ -1,19 +1,25 @@
 import {connectMongo} from "../../../lib/mongodb";
 import Note from "../../../models/Note";
+import { requireAdmin } from "../../../lib/serverAuth";
+import { noStore } from "../../../lib/apiCache";
 
 export default async function handler(req, res) {
-  await connectMongo();
-
+  noStore(res);
   if (req.method === "POST") {
+    const session = await requireAdmin(req, res);
+    if (!session) return;
+
+    await connectMongo();
+
     try {
-      const { title, subject, semester, content, userId } = req.body;
+      const { title, subject, semester, content } = req.body;
 
       const newNote = await Note.create({
         title,
         subject,
         semester,
         content,
-        uploadedBy: userId,
+        uploadedBy: session.user.id,
       });
 
       return res.status(201).json({ success: true, data: newNote });

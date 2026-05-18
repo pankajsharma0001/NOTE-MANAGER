@@ -28,8 +28,7 @@ export default function DashboardLayout({ children }) {
   ];
 
   // Admin only
-  const adminEmails = ["sharmapankaj102030@gmail.com", "engineeringnotez@gmail.com"];
-  if (session?.user?.email && adminEmails.includes(session.user.email)) {
+  if (session?.user?.role === "admin") {
     sidebarItems.push({
       icon: "📝",
       label: "Approvals",
@@ -46,7 +45,7 @@ export default function DashboardLayout({ children }) {
   });
 
   useEffect(() => {
-    if (status === "unauthenticated") router.push("/login");
+    if (status === "unauthenticated") router.replace("/login");
 
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {

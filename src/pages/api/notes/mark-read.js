@@ -1,15 +1,22 @@
 import { connectMongo } from "../../../lib/mongodb";
 import User from "../../../models/User";
 import Note from "../../../models/Note";
+import { requireSession } from "../../../lib/serverAuth";
+import { noStore } from "../../../lib/apiCache";
 
 export default async function handler(req, res) {
+  noStore(res);
   if (req.method !== "POST") return res.status(405).json({ message: "Method not allowed" });
+
+  const session = await requireSession(req, res);
+  if (!session) return;
+
   await connectMongo();
 
-  const { userId, noteId, progress, semester} = req.body;
+  const { noteId, progress } = req.body;
 
   try {
-    const user = await User.findById(userId);
+    const user = await User.findById(session.user.id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
     const note = await Note.findById(noteId);

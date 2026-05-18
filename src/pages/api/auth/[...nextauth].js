@@ -2,6 +2,12 @@ import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { connectMongo } from "../../../lib/mongodb";
 import User from "../../../models/User";
+import { isAdminEmail } from "../../../lib/admin";
+
+const SESSION_MAX_AGE = 30 * 24 * 60 * 60; // 30 days
+const useSecureCookies =
+  process.env.NODE_ENV === "production" &&
+  process.env.NEXTAUTH_URL?.startsWith("https");
 
 export const authOptions = {
   providers: [
@@ -17,12 +23,25 @@ export const authOptions = {
 
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: SESSION_MAX_AGE,
     updateAge: 24 * 60 * 60, // Update session every 24 hours
   },
 
   jwt: {
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: SESSION_MAX_AGE,
+  },
+
+  cookies: {
+    sessionToken: {
+      name: `${useSecureCookies ? "__Secure-" : ""}next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: useSecureCookies,
+        maxAge: SESSION_MAX_AGE,
+      },
+    },
   },
 
   secret: process.env.NEXTAUTH_SECRET,
@@ -66,7 +85,7 @@ export const authOptions = {
             name: user.name,
             email: user.email,
             image: user.image,
-            role: ["sharmapankaj102030@gmail.com"].includes(user.email) ? "admin" : "user",
+            role: isAdminEmail(user.email) ? "admin" : "user",
             semester: user.semester || "",
             college: user.college || "",
             address: user.address || "",
@@ -89,7 +108,7 @@ export const authOptions = {
   },
 
   trustHost: true,
-  useSecureCookies: process.env.NEXTAUTH_URL?.startsWith("https"),
+  useSecureCookies,
 };
 
 export default NextAuth(authOptions);

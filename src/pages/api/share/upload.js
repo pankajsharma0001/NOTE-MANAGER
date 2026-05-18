@@ -4,6 +4,8 @@ import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
 import { connectMongo } from "../../../lib/mongodb";
 import PendingNote from "../../../models/PendingNote";
+import { requireSession } from "../../../lib/serverAuth";
+import { noStore } from "../../../lib/apiCache";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_NAME,
@@ -11,15 +13,37 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_SECRET,
 });
 
-const upload = multer({ storage: multer.memoryStorage() });
+const allowedMimeTypes = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (allowedMimeTypes.includes(file.mimetype)) cb(null, true);
+    else cb(new Error("Only PDF, JPG, PNG, and WEBP files are allowed"));
+  },
+});
 const router = createRouter();
+
+router.use(async (req, res, next) => {
+  noStore(res);
+  const session = await requireSession(req, res);
+  if (!session) return;
+
+  req.session = session;
+  return next();
+});
 
 router.use(upload.single("file"));
 
 router.post(async (req, res) => {
   await connectMongo();
 
-  const { title, subject, semester, content, userId } = req.body;
+  const { title, subject, semester, content } = req.body;
+
+  if (!title || !subject || !semester) {
+    return res.status(400).json({ success: false, error: "Title, subject, and semester are required" });
+  }
 
   if (!req.file) {
     return res.status(400).json({ success: false, error: "No file uploaded" });
@@ -63,7 +87,7 @@ router.post(async (req, res) => {
       semester,
       content,
       fileUrl: result.secure_url, // e.g. .../raw/upload/notes/yourfile.pdf
-      uploadedBy: userId || null,
+      uploadedBy: req.session.user.id,
     });
 
     return res.status(200).json({ success: true, data: newPendingNote });
@@ -77,7 +101,7 @@ export const config = { api: { bodyParser: false } };
 
 export default router.handler({
   onError: (err, req, res) =>
-    res.status(500).json({ error: `Something went wrong: ${err.message}` }),
+    res.status(400).json({ success: false, error: err.message }),
   onNoMatch: (req, res) =>
     res.status(405).json({ error: `Method '${req.method}' Not Allowed` }),
 });

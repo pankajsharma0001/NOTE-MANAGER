@@ -3,8 +3,10 @@ import { authOptions } from "../auth/[...nextauth]";
 import { connectMongo } from "../../../lib/mongodb";
 import User from "../../../models/User";
 import Note from "../../../models/Note"; // <-- import your Note model
+import { noStore } from "../../../lib/apiCache";
 
 export default async function handler(req, res) {
+  noStore(res);
   if (req.method !== "POST") {
     return res.status(405).json({ success: false, error: "Method not allowed" });
   }

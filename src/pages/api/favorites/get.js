@@ -2,8 +2,10 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "../auth/[...nextauth]";
 import { connectMongo } from "../../../lib/mongodb";
 import User from "../../../models/User";
+import { noStore } from "../../../lib/apiCache";
 
 export default async function handler(req, res) {
+  noStore(res);
   if (req.method !== "GET")
     return res.status(405).json({ success: false, message: "Method not allowed" });
 

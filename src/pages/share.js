@@ -1,10 +1,8 @@
 import { useState, useRef, useEffect } from "react";
-import { useSession } from "next-auth/react";
 import DashboardLayout from "../components/DashboardLayout";
 import Image from "next/image";
 
 export default function SharePage() {
-  const { data: session } = useSession();
   const [form, setForm] = useState({
     title: "",
     subject: "",
@@ -74,10 +72,12 @@ export default function SharePage() {
 
   const handleFileSelect = (f) => {
     if (!f) return;
+    if (preview?.startsWith("blob:")) URL.revokeObjectURL(preview);
+
     setFile(f);
     const fileType = f.type;
     if (fileType.startsWith("image/")) setPreview(URL.createObjectURL(f));
-    else if (fileType === "application/pdf") setPreview("/pdf-icon.png"); // replace with your PDF icon path
+    else if (fileType === "application/pdf") setPreview("/file.svg");
     else setPreview(null);
   };
 
@@ -104,8 +104,6 @@ export default function SharePage() {
       else formData.append(key, form[key]);
     });
     formData.append("file", file);
-    if (session?.user?.id) formData.append("userId", session.user.id);
-
     try {
       const res = await fetch("/api/share/upload", { method: "POST", body: formData });
       const data = await res.json();
@@ -113,6 +111,7 @@ export default function SharePage() {
         showToast("File submitted successfully!", "success");
         setForm({ title: "", subject: "", semester: "", content: "" });
         setFile(null);
+        if (preview?.startsWith("blob:")) URL.revokeObjectURL(preview);
         setPreview(null);
         if (contentRef.current) contentRef.current.style.height = "2.5rem";
       } else showToast(`Upload failed! ${data.error || ""}`, "error");
@@ -202,6 +201,7 @@ export default function SharePage() {
             <input
               type="file"
               id="fileInput"
+              accept="application/pdf,image/jpeg,image/png,image/webp"
               className="hidden"
               onChange={(e) => handleFileSelect(e.target.files[0])}
             />
@@ -215,6 +215,9 @@ export default function SharePage() {
                   <Image
                     src={preview}
                     alt="preview"
+                    width={96}
+                    height={96}
+                    unoptimized={preview.startsWith("blob:")}
                     className="w-24 h-24 object-contain mb-2 rounded"
                   />
                 )}
@@ -224,6 +227,7 @@ export default function SharePage() {
                   onClick={(e) => {
                     e.stopPropagation();
                     setFile(null);
+                    if (preview?.startsWith("blob:")) URL.revokeObjectURL(preview);
                     setPreview(null);
                   }}
                   className="mt-2 px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition"

@@ -1,7 +1,9 @@
 import { connectMongo } from "../../../lib/mongodb";
 import Note from "../../../models/Note";
+import { noStore } from "../../../lib/apiCache";
 
 export default async function handler(req, res) {
+  noStore(res);
   await connectMongo();
 
   const { id } = req.query; // id from the URL

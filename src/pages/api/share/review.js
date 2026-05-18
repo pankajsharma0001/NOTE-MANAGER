@@ -1,10 +1,16 @@
 import {connectMongo} from "../../../lib/mongodb";
+import PendingNote from "../../../models/PendingNote";
 import Note from "../../../models/Note";
+import { requireAdmin } from "../../../lib/serverAuth";
+import { noStore } from "../../../lib/apiCache";
 
 export default async function handler(req, res) {
-  await connectMongo();
-
+  noStore(res);
   if (req.method === "POST") {
+    if (!(await requireAdmin(req, res))) return;
+
+    await connectMongo();
+
     try {
       const { id, action } = req.body;
 
@@ -14,17 +20,26 @@ export default async function handler(req, res) {
 
       const status = action === "approve" ? "approved" : "rejected";
 
-      const updatedNote = await Note.findByIdAndUpdate(
-        id,
-        { status },
-        { new: true }
-      );
+      const pending = await PendingNote.findById(id);
 
-      if (!updatedNote) {
-        return res.status(404).json({ success: false, message: "Note not found" });
+      if (!pending) {
+        return res.status(404).json({ success: false, message: "Pending note not found" });
       }
 
-      res.status(200).json({ success: true, note: updatedNote });
+      if (status === "approved") {
+        await Note.create({
+          title: pending.title,
+          subject: pending.subject,
+          semester: pending.semester,
+          content: pending.content,
+          fileUrl: pending.fileUrl,
+          uploadedBy: pending.uploadedBy,
+        });
+      }
+
+      await PendingNote.findByIdAndDelete(id);
+
+      res.status(200).json({ success: true, status });
     } catch (err) {
       res.status(500).json({ success: false, message: "Failed to update note" });
     }

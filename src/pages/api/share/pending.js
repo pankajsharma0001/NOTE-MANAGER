@@ -1,12 +1,16 @@
 // pages/api/share/pending.js
 import {connectMongo} from "../../../lib/mongodb";
 import PendingNote from "../../../models/PendingNote";
-import User from "../../../models/User";
+import { requireAdmin } from "../../../lib/serverAuth";
+import { noStore } from "../../../lib/apiCache";
 
 export default async function handler(req, res) {
-  await connectMongo();
-
+  noStore(res);
   if (req.method === "GET") {
+    if (!(await requireAdmin(req, res))) return;
+
+    await connectMongo();
+
     try {
       const pendingNotes = await PendingNote.find({ status: "pending" })
         .populate("uploadedBy", "email name image semester college address phone") // get uploader info

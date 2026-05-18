@@ -1,7 +1,9 @@
 import { connectMongo } from "../../../lib/mongodb";
 import Note from "../../../models/Note";
+import { noStore } from "../../../lib/apiCache";
 
 export default async function handler(req, res) {
+  noStore(res);
   await connectMongo();
 
   if (req.method === "GET") {
@@ -17,7 +19,7 @@ export default async function handler(req, res) {
         filter.subject = subject.trim(); // filter by selected subject
       }
 
-      const notes = await Note.find(filter).sort({ createdAt: -1 });
+      const notes = await Note.find(filter).sort({ uploadedAt: -1, createdAt: -1 });
 
       return res.status(200).json({ success: true, data: notes });
     } catch (error) {

@@ -1,17 +1,21 @@
 import { connectMongo } from "../../../lib/mongodb";
 import User from "../../../models/User";
+import { requireSession } from "../../../lib/serverAuth";
+import { noStore } from "../../../lib/apiCache";
 
 export default async function handler(req, res) {
-  await connectMongo();
-
+  noStore(res);
   if (req.method !== "POST") {
     return res.status(405).json({ success: false, message: "Method not allowed" });
   }
 
-  try {
-    const { email, name, semester, college, address, phone, profileComplete } = req.body;
+  const session = await requireSession(req, res);
+  if (!session) return;
 
-    if (!email) return res.status(400).json({ success: false, message: "Email is required" });
+  await connectMongo();
+
+  try {
+    const { name, semester, college, address, phone, profileComplete } = req.body;
 
     const updateFields = {};
     if (name !== undefined) updateFields.name = name;
@@ -22,7 +26,7 @@ export default async function handler(req, res) {
     if (profileComplete !== undefined) updateFields.profileComplete = profileComplete;
 
     const updatedUser = await User.findOneAndUpdate(
-      { email },
+      { _id: session.user.id },
       updateFields,
       { new: true, useFindAndModify: false } // important for Mongoose
     ).lean(); // <- convert to plain JS object

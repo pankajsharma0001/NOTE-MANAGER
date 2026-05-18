@@ -54,7 +54,6 @@ export default function Profile({ embedded = false, onComplete }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email,
           name,
           semester,
           college,
@@ -81,7 +80,7 @@ export default function Profile({ embedded = false, onComplete }) {
       const res = await fetch("/api/user/update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, profileComplete: true }),
+        body: JSON.stringify({ profileComplete: true }),
       });
       const data = await res.json();
       if (data.success) {
