@@ -16,7 +16,7 @@ const subjectsBySemester = {
 
 export default function Semester() {
   const router = useRouter();
-  const { semester } = router.query;
+  const { semester, subject } = router.query;
 
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -32,12 +32,26 @@ export default function Semester() {
       });
   }, []);
 
-  // Select first subject by default
+  // Restore the subject from the URL, or fall back to the first subject.
   useEffect(() => {
-    if (semester && subjectsBySemester[semester]?.length > 0) {
-      setSelectedSubject(subjectsBySemester[semester][0]);
+    if (!semester || !subjectsBySemester[semester]?.length) return;
+
+    const subjectFromUrl = Array.isArray(subject) ? subject[0] : subject;
+    if (subjectFromUrl && subjectsBySemester[semester].includes(subjectFromUrl)) {
+      setSelectedSubject(subjectFromUrl);
+    } else {
+      const fallbackSubject = subjectsBySemester[semester][0];
+      setSelectedSubject(fallbackSubject);
+      router.replace(
+        {
+          pathname: router.pathname,
+          query: { semester, subject: fallbackSubject },
+        },
+        undefined,
+        { shallow: true }
+      );
     }
-  }, [semester]);
+  }, [semester, subject, router]);
 
   // Fetch notes for selected subject
   useEffect(() => {
@@ -70,6 +84,18 @@ export default function Semester() {
     }
   };
 
+  const selectSubject = (nextSubject) => {
+    setSelectedSubject(nextSubject);
+    router.replace(
+      {
+        pathname: router.pathname,
+        query: { semester, subject: nextSubject },
+      },
+      undefined,
+      { shallow: true }
+    );
+  };
+
   if (!semester) return <p>Loading...</p>;
 
   return (
@@ -94,7 +120,7 @@ export default function Semester() {
               <select 
                 className="w-full p-2 rounded bg-gray-700 text-gray-300 mb-4 appearance-none"
                 value={selectedSubject}
-                onChange={(e) => setSelectedSubject(e.target.value)}
+                onChange={(e) => selectSubject(e.target.value)}
               >
                 {subjectsBySemester[semester]?.map(subject => (
                   <option key={subject} value={subject}>
@@ -120,7 +146,7 @@ export default function Semester() {
                       ? "bg-teal-500 text-white shadow-lg"
                       : "bg-gray-700 text-gray-300 hover:bg-gray-600"
                   }`}
-                  onClick={() => setSelectedSubject(subject)}
+                  onClick={() => selectSubject(subject)}
                 >
                   {subject}
                 </button>
@@ -141,7 +167,12 @@ export default function Semester() {
                   <div
                     key={note._id}
                     className="relative bg-gradient-to-br from-gray-800 via-gray-900 to-gray-800 p-4 rounded-xl shadow-lg hover:scale-105 transition cursor-pointer"
-                    onClick={() => router.push(`/notes/${semester}/${note._id}`)}
+                    onClick={() =>
+                      router.push({
+                        pathname: `/notes/${semester}/${note._id}`,
+                        query: { subject: selectedSubject },
+                      })
+                    }
                   >
                     {/* Favorite toggle */}
                     <button
