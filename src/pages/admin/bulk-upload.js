@@ -111,6 +111,7 @@ export default function BulkUploadPage() {
                 cloudinaryFormData.append("api_key", process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY);
                 cloudinaryFormData.append("timestamp", timestamp);
                 cloudinaryFormData.append("signature", signature);
+                cloudinaryFormData.append("public_id", publicId);
                 if (isPdf) {
                     cloudinaryFormData.append("format", "pdf");
                 }
