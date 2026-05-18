@@ -45,14 +45,14 @@ export default function SharePage() {
   };
 
   const subjectsBySemester = {
-    1: ["Applied Chemistry","Applied Physics","Calculus I","Communication Techniques","Computer Programming","Engineering Drawing"],
-    2: ["Algebra & Geometry","Applied Mechanics","Basic Electrical and Electronics Engineering","Civil Engineering Materials","Civil Engineering Workshop","Engineering Geology","Introduction to Energy Engineering"],
-    3: ["Building Technology","Calculus II","Fluid Mechanics","Numerical Methods","Strength of Materials","Surveying I"],
-    4: ["Engineering Economics","Hydraulics","Probability and Statistics","Soil Mechanics","Structural Analysis I","Surveying II"],
-    5: ["Engineering Hydrology","Design of Steel and Timber Structure","Foundation Engineering","Structural Analysis II","Transportation Engineering I","Water Supply Engineering"],
-    6: ["Civil Engineering Project I","Concrete Technology & Masonry Structure","Estimation and Valuation","Elective I","Irrigation and Dranage Engineering","Sanitary Engineering","Survery Field Project","Transportation Engineering II"],
-    7: ["Civil Engineering Project II","Construction Project Management","Design of R.C.C. Structure","Elective II","Engineering Professional Practice","Hydropower Engineering"],
-    8: ["Elective III","Internship"],
+    1: ["Applied Chemistry", "Applied Physics", "Calculus I", "Communication Techniques", "Computer Programming", "Engineering Drawing"],
+    2: ["Algebra & Geometry", "Applied Mechanics", "Basic Electrical and Electronics Engineering", "Civil Engineering Materials", "Civil Engineering Workshop", "Engineering Geology", "Introduction to Energy Engineering"],
+    3: ["Building Technology", "Calculus II", "Fluid Mechanics", "Numerical Methods", "Strength of Materials", "Surveying I"],
+    4: ["Engineering Economics", "Hydraulics", "Probability and Statistics", "Soil Mechanics", "Structural Analysis I", "Surveying II"],
+    5: ["Engineering Hydrology", "Design of Steel and Timber Structure", "Foundation Engineering", "Structural Analysis II", "Transportation Engineering I", "Water Supply Engineering"],
+    6: ["Civil Engineering Project I", "Concrete Technology & Masonry Structure", "Estimation and Valuation", "Elective I", "Irrigation and Dranage Engineering", "Sanitary Engineering", "Survery Field Project", "Transportation Engineering II"],
+    7: ["Civil Engineering Project II", "Construction Project Management", "Design of R.C.C. Structure", "Elective II", "Engineering Professional Practice", "Hydropower Engineering"],
+    8: ["Elective III", "Internship"],
   };
 
   const showToast = (message, type = "success") => {
@@ -109,6 +109,7 @@ export default function SharePage() {
       const data = await res.json();
       if (data.success) {
         showToast("File submitted successfully!", "success");
+        sessionStorage.removeItem("noteCountsCache");
         setForm({ title: "", subject: "", semester: "", content: "" });
         setFile(null);
         if (preview?.startsWith("blob:")) URL.revokeObjectURL(preview);
@@ -127,7 +128,7 @@ export default function SharePage() {
 
   return (
     <DashboardLayout>
-      <div className="min-h-screen flex justify-center items-start pt-12 px-4">
+      <div className="flex justify-center items-start pt-4 sm:pt-12 px-4 pb-20 md:pb-0">
         <form
           onSubmit={handleSubmit}
           onDragOver={(e) => isDesktop && e.preventDefault()}
@@ -193,9 +194,8 @@ export default function SharePage() {
 
           {/* Upload area */}
           <div
-            className={`flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-6 text-center transition-all duration-300 ${
-              file ? "border-teal-500 bg-gray-700/40" : "border-gray-600 hover:border-teal-400 hover:bg-gray-700/20"
-            }`}
+            className={`flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-6 text-center transition-all duration-300 ${file ? "border-teal-500 bg-gray-700/40" : "border-gray-600 hover:border-teal-400 hover:bg-gray-700/20"
+              }`}
             onClick={() => document.getElementById("fileInput").click()}
           >
             <input
@@ -207,7 +207,7 @@ export default function SharePage() {
             />
             {!file ? (
               <p className="text-gray-400">
-                {isDesktop ? "📂 Drag & drop (PC) or click to upload" : "📁 Tap to choose a file"}
+                {isDesktop ? "📂 Drag & drop or click to upload" : "📁 Tap to choose a file"}
               </p>
             ) : (
               <div className="flex flex-col items-center">
@@ -241,9 +241,8 @@ export default function SharePage() {
           {/* Submit */}
           <button
             type="submit"
-            className={`w-full py-2 rounded-lg font-semibold flex items-center justify-center gap-2 transition text-white ${
-              loading ? "bg-gray-500 cursor-not-allowed" : "bg-teal-500 hover:bg-teal-600"
-            }`}
+            className={`w-full py-2 rounded-lg font-semibold flex items-center justify-center gap-2 transition text-white ${loading ? "bg-gray-500 cursor-not-allowed" : "bg-teal-500 hover:bg-teal-600"
+              }`}
             disabled={loading}
           >
             {loading && (
@@ -262,9 +261,8 @@ export default function SharePage() {
 
           {/* Toast */}
           <div
-            className={`fixed bottom-8 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded shadow-lg text-white transition-all duration-500 ${
-              toast.show ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-            } ${toast.type === "success" ? "bg-green-500" : "bg-red-500"}`}
+            className={`fixed bottom-8 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded shadow-lg text-white transition-all duration-500 ${toast.show ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+              } ${toast.type === "success" ? "bg-green-500" : "bg-red-500"}`}
           >
             {toast.message}
           </div>
