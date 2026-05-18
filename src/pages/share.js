@@ -97,15 +97,70 @@ export default function SharePage() {
       return;
     }
 
+    if (file.size > 10 * 1024 * 1024) {
+      showToast("File is too large. Max size is 10MB.", "error");
+      return;
+    }
+
     setLoading(true);
-    const formData = new FormData();
-    Object.keys(form).forEach((key) => {
-      if (key === "semester") formData.append(key, semesterMap[form[key]]);
-      else formData.append(key, form[key]);
-    });
-    formData.append("file", file);
+
     try {
-      const res = await fetch("/api/share/upload", { method: "POST", body: formData });
+      // 1. Get signature from backend
+      const sigRes = await fetch("/api/share/upload");
+      const { signature, timestamp } = await sigRes.json();
+
+      if (!signature) throw new Error("Could not get upload signature");
+
+      // 2. Upload file directly to Cloudinary
+      const cloudinaryFormData = new FormData();
+      cloudinaryFormData.append("file", file);
+      cloudinaryFormData.append("api_key", process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY);
+      cloudinaryFormData.append("timestamp", timestamp);
+      cloudinaryFormData.append("signature", signature);
+
+      const isPdf = file.type === "application/pdf";
+      const resourceType = isPdf ? "image" : "auto";
+      const safeTitle = form.title ? form.title.trim().replace(/[^a-zA-Z0-9-_]/g, "_") : Date.now();
+      const publicId = `notes/${safeTitle}-${Date.now()}`;
+
+      cloudinaryFormData.append("public_id", publicId);
+      if (isPdf) {
+        cloudinaryFormData.append("format", "pdf");
+      }
+
+      const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+      if (!cloudName) {
+        throw new Error("Missing NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME environment variable.");
+      }
+
+      const uploadRes = await fetch(
+        `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`,
+        {
+          method: "POST",
+          body: cloudinaryFormData,
+        }
+      );
+
+      const uploadData = await uploadRes.json();
+      if (!uploadRes.ok) {
+        throw new Error(uploadData.error?.message || "Cloudinary upload failed");
+      }
+
+      // 3. Save to database
+      const dbPayload = {
+        title: form.title,
+        subject: form.subject,
+        semester: semesterMap[form.semester],
+        content: form.content,
+        fileUrl: uploadData.secure_url,
+      };
+
+      const res = await fetch("/api/share/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(dbPayload),
+      });
+
       const data = await res.json();
       if (data.success) {
         showToast("File submitted successfully!", "success");

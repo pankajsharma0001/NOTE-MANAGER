@@ -1,6 +1,5 @@
 // pages/api/share/upload.js
 import { createRouter } from "next-connect";
-import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
 import { connectMongo } from "../../../lib/mongodb";
 import PendingNote from "../../../models/PendingNote";
@@ -13,16 +12,6 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_SECRET,
 });
 
-const allowedMimeTypes = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
-
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 }, // changed back to 10MB
-  fileFilter: (req, file, cb) => {
-    if (allowedMimeTypes.includes(file.mimetype)) cb(null, true);
-    else cb(new Error("Only PDF, JPG, PNG, and WEBP files are allowed"));
-  },
-});
 const router = createRouter();
 
 router.use(async (req, res, next) => {
@@ -34,59 +23,41 @@ router.use(async (req, res, next) => {
   return next();
 });
 
-router.use(upload.single("file"));
+// Endpoint to generate Cloudinary signature
+router.get(async (req, res) => {
+  try {
+    const timestamp = Math.round(new Date().getTime() / 1000);
+    const signature = cloudinary.utils.api_sign_request(
+      {
+        timestamp: timestamp,
+      },
+      process.env.CLOUDINARY_SECRET
+    );
 
+    res.status(200).json({ timestamp, signature });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to generate signature" });
+  }
+});
+
+// Endpoint to save the note in the database after the client uploads to Cloudinary
 router.post(async (req, res) => {
   await connectMongo();
 
-  const { title, subject, semester, content } = req.body;
+  const { title, subject, semester, content, fileUrl } = req.body;
 
-  if (!title || !subject || !semester) {
-    return res.status(400).json({ success: false, error: "Title, subject, and semester are required" });
-  }
-
-  if (!req.file) {
-    return res.status(400).json({ success: false, error: "No file uploaded" });
+  if (!title || !subject || !semester || !fileUrl) {
+    return res.status(400).json({ success: false, error: "Title, subject, semester, and fileUrl are required" });
   }
 
   try {
-    const isPdf = req.file.mimetype === "application/pdf";
-
-    // ✅ Use "image" so Cloudinary serves a PDF with a previewable Content-Type
-    const resourceType = isPdf ? "image" : "auto";
-
-    // ✅ Don't put ".pdf" in public_id – Cloudinary will add exactly one
-    const safeTitle = title
-      ? title.trim().replace(/[^a-zA-Z0-9-_]/g, "_")
-      : Date.now();
-    const publicId = `notes/${safeTitle}-${Date.now()}`;
-
-    const streamUpload = () =>
-      new Promise((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream(
-          {
-            resource_type: resourceType,
-            public_id: publicId,
-            use_filename: true,
-            unique_filename: false,
-            format: isPdf ? "pdf" : undefined, // ✅ Force correct format
-          },
-          (error, result) => {
-            if (result) resolve(result);
-            else reject(error);
-          }
-        );
-        stream.end(req.file.buffer);
-      });
-
-    const result = await streamUpload();
-
     const newPendingNote = await PendingNote.create({
       title,
       subject,
       semester,
       content,
-      fileUrl: result.secure_url, // e.g. .../raw/upload/notes/yourfile.pdf
+      fileUrl,
       uploadedBy: req.session.user.id,
     });
 
@@ -96,8 +67,6 @@ router.post(async (req, res) => {
     return res.status(500).json({ success: false, error: err.message });
   }
 });
-
-export const config = { api: { bodyParser: false } };
 
 export default router.handler({
   onError: (err, req, res) =>
