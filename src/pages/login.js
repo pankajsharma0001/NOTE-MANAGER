@@ -7,6 +7,8 @@ import { useRouter } from "next/router";
 export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [stats, setStats] = useState({ totalStudents: 0, totalNotes: 0 });
+  // Avoid hydration mismatch by delaying full render until mounted on client
+  const [mounted, setMounted] = useState(false);
   const { status } = useSession();
   const router = useRouter();
 
@@ -31,6 +33,10 @@ export default function Login() {
     fetchStats();
   }, []);
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const handleSignIn = async () => {
     try {
       setIsLoading(true);
@@ -43,6 +49,9 @@ export default function Login() {
       setIsLoading(false);
     }
   };
+
+  // Render a minimal stable placeholder on the server to avoid hydration mismatches.
+  if (!mounted) return <div className="min-h-screen bg-gray-900" />;
 
   return (
     <div className="h-[100dvh] overflow-hidden w-full flex flex-col justify-center md:flex-row bg-gray-900 text-white font-sans">
