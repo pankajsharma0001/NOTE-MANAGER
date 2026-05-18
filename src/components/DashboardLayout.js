@@ -30,14 +30,9 @@ export default function DashboardLayout({ children }) {
   // Admin only
   if (session?.user?.role === "admin") {
     sidebarItems.push({
-      icon: "📝",
-      label: "Approvals",
-      path: "/admin/approvals",
-    });
-    sidebarItems.push({
-      icon: "📤",
-      label: "Bulk Upload",
-      path: "/admin/bulk-upload",
+      icon: "🛠️",
+      label: "Admin",
+      path: "/admin",
     });
   }
 
@@ -45,6 +40,9 @@ export default function DashboardLayout({ children }) {
   const activeTab = sidebarItems.findIndex((item) => {
     if (item.path === "/notes") {
       return router.asPath.startsWith("/notes");
+    }
+    if (item.path === "/admin") {
+      return router.asPath.startsWith("/admin");
     }
     return router.asPath === item.path;
   });
