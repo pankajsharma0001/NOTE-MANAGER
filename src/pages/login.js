@@ -48,16 +48,16 @@ export default function Login() {
     <div className="h-[100dvh] overflow-hidden w-full flex flex-col justify-center md:flex-row bg-gray-900 text-white font-sans">
 
       {/* Left / Top Panel - Branding & Welcome text */}
-      <div className="w-full md:w-1/2 md:h-full p-4 sm:p-6 md:p-12 lg:p-20 flex flex-col justify-center relative overflow-hidden shrink-0 md:shrink md:flex-1">
+      <div className="w-full h-[45dvh] md:h-full md:w-1/2 p-4 sm:p-6 md:p-12 lg:p-20 flex flex-col justify-center relative overflow-hidden flex-none md:flex-1">
         {/* Subtle background glow */}
         <div className="absolute top-10 left-10 w-48 h-48 md:w-72 md:h-72 bg-teal-500 rounded-full mix-blend-multiply filter blur-[80px] md:blur-[100px] opacity-20"></div>
         <div className="absolute bottom-10 right-10 w-48 h-48 md:w-72 md:h-72 bg-blue-500 rounded-full mix-blend-multiply filter blur-[80px] md:blur-[100px] opacity-20 hidden md:block"></div>
 
         <div className="relative z-10 w-full max-w-xl mx-auto md:mx-0 flex flex-col justify-center">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-1 md:mb-4 text-white mt-4 md:mt-0 text-center md:text-left">
+          <h1 className="text-[28px] leading-tight sm:text-4xl md:text-5xl font-extrabold mb-1 md:mb-4 text-white mt-4 md:mt-0 text-center md:text-left">
             Welcome Back
           </h1>
-          <p className="text-teal-400 text-sm md:text-xl font-semibold mb-2 md:mb-6 flex items-center justify-center md:justify-start gap-2">
+          <p className="text-teal-400 text-[13px] sm:text-sm md:text-xl font-semibold mb-2 md:mb-6 flex items-center justify-center md:justify-start gap-2">
             ✨ Note Manager
           </p>
           <p className="text-gray-400 text-[12px] sm:text-sm md:text-lg leading-snug lg:leading-relaxed mb-4 md:mb-8 hidden sm:block text-center md:text-left">
@@ -65,20 +65,20 @@ export default function Login() {
           </p>
 
           <div className="grid grid-cols-2 gap-3 md:gap-4 mt-2 sm:mt-4 md:mt-8">
-            <div className="bg-gray-900 border border-gray-800 p-3 sm:p-4 md:p-6 rounded-xl md:rounded-2xl flex flex-col items-center justify-center shadow-lg">
+            <div className="bg-gray-900 border border-gray-800 p-2 sm:p-4 md:p-6 rounded-xl md:rounded-2xl flex flex-col items-center justify-center shadow-lg">
               <h3 className="text-xl sm:text-3xl md:text-4xl font-bold text-teal-400 mb-0 md:mb-2">{stats.totalStudents || "..."}+</h3>
-              <p className="text-gray-500 text-[10px] md:text-sm font-medium tracking-wide">Total Students</p>
+              <p className="text-gray-500 text-[9px] md:text-sm font-medium tracking-wide">Total Students</p>
             </div>
-            <div className="bg-gray-900 border border-gray-800 p-3 sm:p-4 md:p-6 rounded-xl md:rounded-2xl flex flex-col items-center justify-center shadow-lg">
+            <div className="bg-gray-900 border border-gray-800 p-2 sm:p-4 md:p-6 rounded-xl md:rounded-2xl flex flex-col items-center justify-center shadow-lg">
               <h3 className="text-xl sm:text-3xl md:text-4xl font-bold text-blue-400 mb-0 md:mb-2">{stats.totalNotes || "..."}+</h3>
-              <p className="text-gray-500 text-[10px] md:text-sm font-medium tracking-wide">Study Materials</p>
+              <p className="text-gray-500 text-[9px] md:text-sm font-medium tracking-wide">Study Materials</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Right / Bottom Panel - Auth */}
-      <div className="w-full md:w-1/2 md:h-full p-4 sm:p-6 md:p-12 lg:p-20 flex flex-col justify-start md:justify-center items-center bg-gray-900 shrink-0 md:flex-1 relative md:border-l border-gray-800 pt-6 md:pt-12">
+      <div className="w-full h-[55dvh] md:h-full md:w-1/2 p-4 sm:p-6 md:p-12 lg:p-20 flex flex-col justify-center items-center bg-gray-900 flex-none md:flex-1 relative md:border-l border-gray-800">
         <div className="w-full max-w-md bg-gray-800/80 backdrop-blur-sm border border-gray-700/80 rounded-xl md:rounded-2xl p-5 sm:p-8 md:p-10 shadow-2xl flex flex-col items-center mx-auto my-auto h-auto">
 
           <Image
