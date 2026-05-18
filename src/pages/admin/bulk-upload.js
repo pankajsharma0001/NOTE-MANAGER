@@ -73,18 +73,86 @@ export default function BulkUploadPage() {
         }
 
         setLoading(true);
-        const formData = new FormData();
-        formData.append("semester", semesterMap[form.semester]);
-        formData.append("subject", form.subject);
-        if (form.content) formData.append("content", form.content);
-
-        files.forEach((file) => {
-            formData.append("files", file);
-        });
 
         try {
-            const res = await fetch("/api/admin/bulk-upload", { method: "POST", body: formData });
+            // 1. Get signature from backend
+            const sigRes = await fetch("/api/share/upload");
+            const { signature, timestamp } = await sigRes.json();
+
+            if (!signature) throw new Error("Could not get upload signature");
+
+            const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+            if (!cloudName) {
+                throw new Error("Missing NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME environment variable.");
+            }
+
+            const uploadedFilesData = [];
+
+            // 2. Upload each file directly to Cloudinary
+            for (const file of files) {
+                if (file.size > 10 * 1024 * 1024) {
+                    showToast(`File ${file.name} is too large. Max size is 10MB.`, "error");
+                    continue;
+                }
+
+                const cloudinaryFormData = new FormData();
+                cloudinaryFormData.append("file", file);
+                cloudinaryFormData.append("api_key", process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY);
+                cloudinaryFormData.append("timestamp", timestamp);
+                cloudinaryFormData.append("signature", signature);
+
+                const isPdf = file.type === "application/pdf";
+                const resourceType = isPdf ? "image" : "auto";
+
+                const originalNameWithoutExt = file.name.replace(/\.[^/.]+$/, "");
+                const title = originalNameWithoutExt || "Untitled";
+                const safeTitle = title.trim().replace(/[^a-zA-Z0-9-_]/g, "_");
+                const publicId = `notes/${safeTitle}-${Date.now()}`;
+
+                cloudinaryFormData.append("public_id", publicId);
+                if (isPdf) {
+                    cloudinaryFormData.append("format", "pdf");
+                }
+
+                const uploadRes = await fetch(
+                    `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`,
+                    {
+                        method: "POST",
+                        body: cloudinaryFormData,
+                    }
+                );
+
+                const uploadData = await uploadRes.json();
+                if (!uploadRes.ok) {
+                    throw new Error(uploadData.error?.message || "Cloudinary upload failed");
+                }
+
+                uploadedFilesData.push({
+                    title: title,
+                    fileUrl: uploadData.secure_url
+                });
+            }
+
+            if (uploadedFilesData.length === 0) {
+                setLoading(false);
+                return;
+            }
+
+            // 3. Save all URLs to database
+            const dbPayload = {
+                subject: form.subject,
+                semester: semesterMap[form.semester],
+                content: form.content,
+                files: uploadedFilesData
+            };
+
+            const res = await fetch("/api/admin/bulk-upload", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(dbPayload)
+            });
             const data = await res.json();
+
             if (data.success) {
                 showToast("Files bulk-uploaded successfully!", "success");
                 sessionStorage.removeItem("noteCountsCache");
