@@ -27,10 +27,14 @@ router.use(async (req, res, next) => {
 router.get(async (req, res) => {
   try {
     const timestamp = Math.round(new Date().getTime() / 1000);
+    const { publicId, format } = req.query;
+
+    const paramsToSign = { timestamp };
+    if (publicId) paramsToSign.public_id = publicId;
+    if (format) paramsToSign.format = format;
+
     const signature = cloudinary.utils.api_sign_request(
-      {
-        timestamp: timestamp,
-      },
+      paramsToSign,
       process.env.CLOUDINARY_SECRET
     );
 

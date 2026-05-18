@@ -105,8 +105,16 @@ export default function SharePage() {
     setLoading(true);
 
     try {
-      // 1. Get signature from backend
-      const sigRes = await fetch("/api/share/upload");
+      const isPdf = file.type === "application/pdf";
+      const resourceType = isPdf ? "image" : "auto";
+      const safeTitle = form.title ? form.title.trim().replace(/[^a-zA-Z0-9-_]/g, "_") : Date.now();
+      const publicId = `notes/${safeTitle}-${Date.now()}`;
+
+      // 1. Get signature from backend (now sending expected params)
+      const params = new URLSearchParams({ publicId });
+      if (isPdf) params.append("format", "pdf");
+
+      const sigRes = await fetch(`/api/share/upload?${params.toString()}`);
       const { signature, timestamp } = await sigRes.json();
 
       if (!signature) throw new Error("Could not get upload signature");
@@ -117,12 +125,6 @@ export default function SharePage() {
       cloudinaryFormData.append("api_key", process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY);
       cloudinaryFormData.append("timestamp", timestamp);
       cloudinaryFormData.append("signature", signature);
-
-      const isPdf = file.type === "application/pdf";
-      const resourceType = isPdf ? "image" : "auto";
-      const safeTitle = form.title ? form.title.trim().replace(/[^a-zA-Z0-9-_]/g, "_") : Date.now();
-      const publicId = `notes/${safeTitle}-${Date.now()}`;
-
       cloudinaryFormData.append("public_id", publicId);
       if (isPdf) {
         cloudinaryFormData.append("format", "pdf");

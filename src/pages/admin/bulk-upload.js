@@ -75,12 +75,6 @@ export default function BulkUploadPage() {
         setLoading(true);
 
         try {
-            // 1. Get signature from backend
-            const sigRes = await fetch("/api/share/upload");
-            const { signature, timestamp } = await sigRes.json();
-
-            if (!signature) throw new Error("Could not get upload signature");
-
             const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
             if (!cloudName) {
                 throw new Error("Missing NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME environment variable.");
@@ -88,18 +82,12 @@ export default function BulkUploadPage() {
 
             const uploadedFilesData = [];
 
-            // 2. Upload each file directly to Cloudinary
+            // 1. Upload each file directly to Cloudinary
             for (const file of files) {
                 if (file.size > 10 * 1024 * 1024) {
                     showToast(`File ${file.name} is too large. Max size is 10MB.`, "error");
                     continue;
                 }
-
-                const cloudinaryFormData = new FormData();
-                cloudinaryFormData.append("file", file);
-                cloudinaryFormData.append("api_key", process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY);
-                cloudinaryFormData.append("timestamp", timestamp);
-                cloudinaryFormData.append("signature", signature);
 
                 const isPdf = file.type === "application/pdf";
                 const resourceType = isPdf ? "image" : "auto";
@@ -109,7 +97,20 @@ export default function BulkUploadPage() {
                 const safeTitle = title.trim().replace(/[^a-zA-Z0-9-_]/g, "_");
                 const publicId = `notes/${safeTitle}-${Date.now()}`;
 
-                cloudinaryFormData.append("public_id", publicId);
+                // Get specific signature for this file
+                const params = new URLSearchParams({ publicId });
+                if (isPdf) params.append("format", "pdf");
+
+                const sigRes = await fetch(`/api/share/upload?${params.toString()}`);
+                const { signature, timestamp } = await sigRes.json();
+
+                if (!signature) throw new Error("Could not get upload signature");
+
+                const cloudinaryFormData = new FormData();
+                cloudinaryFormData.append("file", file);
+                cloudinaryFormData.append("api_key", process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY);
+                cloudinaryFormData.append("timestamp", timestamp);
+                cloudinaryFormData.append("signature", signature);
                 if (isPdf) {
                     cloudinaryFormData.append("format", "pdf");
                 }
