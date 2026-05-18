@@ -34,6 +34,11 @@ export default function DashboardLayout({ children }) {
       label: "Approvals",
       path: "/admin/approvals",
     });
+    sidebarItems.push({
+      icon: "📤",
+      label: "Bulk Upload",
+      path: "/admin/bulk-upload",
+    });
   }
 
   // Detect current active tab
@@ -103,7 +108,7 @@ export default function DashboardLayout({ children }) {
               md:pb-0 pb-12
               overflow-x-hidden
             "
-            key={router.asPath}
+        key={router.asPath}
       >
         {/* Header */}
         <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
