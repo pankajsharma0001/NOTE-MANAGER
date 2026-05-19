@@ -61,6 +61,50 @@ export default async function handler(req, res) {
       }
     ]);
 
+    // 5. Notes per Semester (for bar chart)
+    const notesPerSemester = await Note.aggregate([
+      { $group: { _id: "$semester", count: { $sum: 1 }, views: { $sum: "$views" } } },
+      { $sort: { _id: 1 } }
+    ]);
+
+    // 6. Uploads over last 7 days (for area chart)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+    sevenDaysAgo.setHours(0, 0, 0, 0);
+
+    const uploadsPerDay = await Note.aggregate([
+      { $match: { createdAt: { $gte: sevenDaysAgo } } },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+
+    // Fill in missing days with 0
+    const dailyUploads = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(sevenDaysAgo);
+      d.setDate(d.getDate() + i);
+      const key = d.toISOString().split("T")[0];
+      const found = uploadsPerDay.find((u) => u._id === key);
+      dailyUploads.push({
+        date: key,
+        label: d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }),
+        count: found ? found.count : 0
+      });
+    }
+
+    // 7. Vote distribution for top notes (for horizontal bar chart)
+    const voteDistribution = topViewedNotes.map((n) => ({
+      title: n.title?.length > 20 ? n.title.substring(0, 20) + "…" : n.title,
+      upvotes: n.upvotes?.length || 0,
+      downvotes: n.downvotes?.length || 0,
+      views: n.views || 0
+    }));
+
     return res.status(200).json({
       success: true,
       data: {
@@ -69,7 +113,10 @@ export default async function handler(req, res) {
         totalPending,
         totalViews,
         topViewedNotes,
-        topContributors
+        topContributors,
+        notesPerSemester,
+        dailyUploads,
+        voteDistribution
       }
     });
 
