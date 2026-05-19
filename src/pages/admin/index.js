@@ -5,8 +5,9 @@ import DashboardLayout from "../../components/DashboardLayout";
 import ApprovalsTab from "../../components/admin/ApprovalsTab";
 import BulkUploadTab from "../../components/admin/BulkUploadTab";
 import ManageNotesTab from "../../components/admin/ManageNotesTab";
+import AdminsTab from "../../components/admin/AdminsTab";
 
-const tabs = [
+const baseTabs = [
   { key: "approvals", label: "📝 Approvals" },
   { key: "bulk-upload", label: "📤 Bulk Upload" },
   { key: "manage", label: "⚙️ Manage Notes" },
@@ -17,12 +18,17 @@ export default function AdminDashboard() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("approvals");
 
+  // Add Admins tab if superadmin
+  const tabs = session?.user?.superadmin 
+    ? [...baseTabs, { key: "admins", label: "👥 Manage Admins" }] 
+    : baseTabs;
+
   // Read tab from URL query on mount
   useEffect(() => {
     if (router.query.tab && tabs.some(t => t.key === router.query.tab)) {
       setActiveTab(router.query.tab);
     }
-  }, [router.query.tab]);
+  }, [router.query.tab, session?.user?.superadmin]);
 
   // Update URL when tab changes
   const switchTab = (key) => {
@@ -64,6 +70,7 @@ export default function AdminDashboard() {
         {activeTab === "approvals" && <ApprovalsTab />}
         {activeTab === "bulk-upload" && <BulkUploadTab />}
         {activeTab === "manage" && <ManageNotesTab />}
+        {activeTab === "admins" && session?.user?.superadmin && <AdminsTab />}
       </div>
     </DashboardLayout>
   );

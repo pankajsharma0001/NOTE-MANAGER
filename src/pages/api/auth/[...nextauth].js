@@ -2,7 +2,7 @@ import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { connectMongo } from "../../../lib/mongodb";
 import User from "../../../models/User";
-import { isAdminEmail } from "../../../lib/admin";
+import { isAdminEmail, isSuperAdminEmail } from "../../../lib/admin";
 
 const SESSION_MAX_AGE = 30 * 24 * 60 * 60; // 30 days
 const useSecureCookies =
@@ -85,7 +85,8 @@ export const authOptions = {
             name: user.name,
             email: user.email,
             image: user.image,
-            role: isAdminEmail(user.email) ? "admin" : "user",
+            role: await isAdminEmail(user.email) ? "admin" : "user",
+            superadmin: isSuperAdminEmail(user.email),
             semester: user.semester || "",
             college: user.college || "",
             address: user.address || "",

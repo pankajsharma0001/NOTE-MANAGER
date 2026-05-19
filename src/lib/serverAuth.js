@@ -1,6 +1,5 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../pages/api/auth/[...nextauth]";
-import { isAdminEmail } from "./admin";
 
 export async function requireSession(req, res) {
   const session = await getServerSession(req, res, authOptions);
@@ -17,7 +16,7 @@ export async function requireAdmin(req, res) {
   const session = await requireSession(req, res);
   if (!session) return null;
 
-  if (!isAdminEmail(session.user.email)) {
+  if (session.user.role !== "admin") {
     res.status(403).json({ success: false, message: "Admin access required" });
     return null;
   }
