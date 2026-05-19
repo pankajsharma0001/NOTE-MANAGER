@@ -157,7 +157,7 @@ export default function DashboardLayout({ children }) {
           </div>
           
           {/* Mobile Global Search (visible only on small screens) */}
-          <div className="block sm:hidden w-full mt-4">
+          <div className="block sm:hidden w-full mt-4 px-2 flex justify-center">
             <SearchBar />
           </div>
         </header>
