@@ -2,18 +2,21 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import DashboardLayout from "../../components/DashboardLayout";
 
-const years = [
-  { year: "First Year", semesters: [{ name: "First Semester", slug: "first" }, { name: "Second Semester", slug: "second" }] },
-  { year: "Second Year", semesters: [{ name: "Third Semester", slug: "third" }, { name: "Fourth Semester", slug: "fourth" }] },
-  { year: "Third Year", semesters: [{ name: "Fifth Semester", slug: "fifth" }, { name: "Sixth Semester", slug: "sixth" }] },
-  { year: "Fourth Year", semesters: [{ name: "Seventh Semester", slug: "seventh" }, { name: "Eighth Semester", slug: "eighth" }] },
+const semestersData = [
+  { slug: "first", name: "First Semester", year: "First Year", subjectsCount: 6, color: "from-blue-500 to-cyan-400", shadow: "hover:shadow-cyan-500/50" },
+  { slug: "second", name: "Second Semester", year: "First Year", subjectsCount: 7, color: "from-purple-500 to-indigo-400", shadow: "hover:shadow-indigo-500/50" },
+  { slug: "third", name: "Third Semester", year: "Second Year", subjectsCount: 6, color: "from-emerald-500 to-teal-400", shadow: "hover:shadow-teal-500/50" },
+  { slug: "fourth", name: "Fourth Semester", year: "Second Year", subjectsCount: 6, color: "from-orange-500 to-amber-400", shadow: "hover:shadow-orange-500/50" },
+  { slug: "fifth", name: "Fifth Semester", year: "Third Year", subjectsCount: 6, color: "from-pink-500 to-rose-400", shadow: "hover:shadow-pink-500/50" },
+  { slug: "sixth", name: "Sixth Semester", year: "Third Year", subjectsCount: 8, color: "from-indigo-500 to-blue-400", shadow: "hover:shadow-blue-500/50" },
+  { slug: "seventh", name: "Seventh Semester", year: "Fourth Year", subjectsCount: 6, color: "from-teal-500 to-emerald-400", shadow: "hover:shadow-emerald-500/50" },
+  { slug: "eighth", name: "Eighth Semester", year: "Fourth Year", subjectsCount: 2, color: "from-red-500 to-orange-400", shadow: "hover:shadow-red-500/50" },
 ];
-
-const semesters = years.flatMap((year) => year.semesters);
 
 export default function Notes() {
   const router = useRouter();
   const [noteCounts, setNoteCounts] = useState({});
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let ignore = false;
@@ -21,12 +24,15 @@ export default function Notes() {
     async function fetchCounts() {
       const cached = sessionStorage.getItem("noteCountsCache");
       if (cached) {
-        if (!ignore) setNoteCounts(JSON.parse(cached));
+        if (!ignore) {
+          setNoteCounts(JSON.parse(cached));
+          setLoading(false);
+        }
         return;
       }
 
       const entries = await Promise.all(
-        semesters.map(async (semester) => {
+        semestersData.map(async (semester) => {
           try {
             const res = await fetch(`/api/notes?semester=${semester.slug}`);
             const data = await res.json();
@@ -39,7 +45,10 @@ export default function Notes() {
 
       const counts = Object.fromEntries(entries);
       sessionStorage.setItem("noteCountsCache", JSON.stringify(counts));
-      if (!ignore) setNoteCounts(counts);
+      if (!ignore) {
+        setNoteCounts(counts);
+        setLoading(false);
+      }
     }
 
     fetchCounts();
@@ -50,51 +59,77 @@ export default function Notes() {
 
   return (
     <DashboardLayout>
-      <h1 className="text-3xl font-bold mb-6 text-center sm:text-left">Notes</h1>
+      <div className="flex flex-col mb-8 animate-slideInRight">
+        <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">Engineering Notes</h1>
+        <p className="text-gray-400 text-sm md:text-base">
+          Find all computer engineering notes, resources, and syllabus properly organized by semester.
+        </p>
+      </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
-        {years.map((year) => (
-          <div key={year.year} className="bg-gradient-to-br from-gray-800 via-gray-900 to-gray-800 p-6 rounded-xl shadow-lg">
-            <h2 className="text-xl font-semibold mb-4 text-teal-400 text-center sm:text-left">{year.year}</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {semestersData.map((sem, index) => {
+          const count = noteCounts[sem.slug];
+          const isReady = !loading && count !== undefined;
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {year.semesters.map((sem) => {
-                const count = noteCounts[sem.slug];
-
-                return (
-                  <div
-                    key={sem.slug}
-                    onClick={() => router.push(`/notes/${sem.slug}`)}
-                    className="flex flex-col items-center justify-center gap-3 p-4 bg-gray-700 rounded-lg cursor-pointer hover:bg-teal-400 hover:text-gray-900 transition transform hover:scale-105 text-center min-h-[8rem]"
-                  >
-                    <div className="flex flex-col items-center justify-center gap-1 sm:gap-2 bg-gray-800 text-white rounded-lg w-20 h-16 sm:w-24 sm:h-20 shadow-md">
+          return (
+            <div
+              key={sem.slug}
+              onClick={() => router.push(`/notes/${sem.slug}`)}
+              className={`relative bg-gray-800 rounded-2xl p-6 cursor-pointer transform transition-all duration-300 hover:-translate-y-2 hover:shadow-xl ${sem.shadow} animate-fadeInUp overflow-hidden group`}
+              style={{ animationDelay: `${index * 0.1}s` }}
+            >
+              {/* Decorative background gradient */}
+              <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${sem.color} rounded-bl-full opacity-10 group-hover:opacity-20 transition-opacity duration-300`}></div>
+              
+              <div className="relative z-10 flex flex-col h-full justify-between">
+                <div>
+                  <div className="flex justify-between items-start mb-4">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                      {sem.year}
+                    </span>
+                    <div className={`p-2 rounded-lg bg-gradient-to-br ${sem.color} shadow-lg`}>
                       <svg
-                        className="w-5 h-5 sm:w-6 sm:h-6"
+                        className="w-5 h-5 text-white"
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
                         strokeWidth="2"
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        aria-hidden="true"
                       >
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                        <path d="M14 2v6h6" />
-                        <path d="M16 13H8" />
-                        <path d="M16 17H8" />
-                        <path d="M10 9H8" />
+                        <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
                       </svg>
-                      <span className="text-xs sm:text-sm font-semibold">
-                        {count ?? "..."} {count === 1 ? "Note" : "Notes"}
-                      </span>
                     </div>
-                    <span className="text-base sm:text-lg font-medium truncate max-w-full">{sem.name}</span>
                   </div>
-                );
-              })}
+                  <h2 className="text-xl font-bold text-white mb-1 group-hover:text-teal-400 transition-colors">
+                    {sem.name}
+                  </h2>
+                  <p className="text-sm text-gray-400 mb-6">
+                    {sem.subjectsCount} Subjects Available
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-between border-t border-gray-700 pt-4 mt-auto">
+                  <div className="flex flex-col">
+                    <span className="text-xs text-gray-500 mb-1">Total Notes</span>
+                    {loading ? (
+                      <div className="h-6 w-12 bg-gray-700 rounded animate-shimmer"></div>
+                    ) : (
+                      <span className="text-lg font-semibold text-white">
+                        {count} <span className="text-sm font-normal text-gray-400">{count === 1 ? 'Note' : 'Notes'}</span>
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-gray-400 group-hover:text-white transition-colors transform group-hover:translate-x-1 duration-300">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </DashboardLayout>
   );
