@@ -2,12 +2,14 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import DashboardLayout from "../../components/DashboardLayout";
+import AnalyticsTab from "../../components/admin/AnalyticsTab";
 import ApprovalsTab from "../../components/admin/ApprovalsTab";
 import BulkUploadTab from "../../components/admin/BulkUploadTab";
 import ManageNotesTab from "../../components/admin/ManageNotesTab";
 import AdminsTab from "../../components/admin/AdminsTab";
 
 const baseTabs = [
+  { key: "analytics", label: "📊 Analytics" },
   { key: "approvals", label: "📝 Approvals" },
   { key: "bulk-upload", label: "📤 Bulk Upload" },
   { key: "manage", label: "⚙️ Manage Notes" },
@@ -16,7 +18,7 @@ const baseTabs = [
 export default function AdminDashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState("approvals");
+  const [activeTab, setActiveTab] = useState("analytics");
 
   // Add Admins tab if superadmin
   const tabs = session?.user?.superadmin 
@@ -67,6 +69,7 @@ export default function AdminDashboard() {
 
       {/* Tab Content */}
       <div className="min-h-[400px]">
+        {activeTab === "analytics" && <AnalyticsTab />}
         {activeTab === "approvals" && <ApprovalsTab />}
         {activeTab === "bulk-upload" && <BulkUploadTab />}
         {activeTab === "manage" && <ManageNotesTab />}

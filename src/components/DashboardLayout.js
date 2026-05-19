@@ -3,6 +3,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/router";
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
+import SearchBar from "./SearchBar";
 
 export default function DashboardLayout({ children }) {
   const { data: session, status } = useSession();
@@ -113,9 +114,14 @@ export default function DashboardLayout({ children }) {
           <div className="flex items-center justify-between w-full">
             <div>
               <h2 className="text-gray-400 text-lg">{greeting}</h2>
-              <h1 className="text-3xl font-bold">
-                Welcome, <span className="text-teal-400">{session.user.name?.toUpperCase()}</span>
+              <h1 className="text-2xl sm:text-3xl font-bold">
+                Welcome, <span className="text-teal-400">{session.user.name?.split(" ")[0]?.toUpperCase()}</span>
               </h1>
+            </div>
+
+            {/* Global Search */}
+            <div className="hidden sm:block flex-1 max-w-xl">
+              <SearchBar />
             </div>
 
             {/* Profile Dropdown */}
@@ -148,6 +154,11 @@ export default function DashboardLayout({ children }) {
                 </div>
               )}
             </div>
+          </div>
+          
+          {/* Mobile Global Search (visible only on small screens) */}
+          <div className="block sm:hidden w-full mt-4">
+            <SearchBar />
           </div>
         </header>
         {children}
