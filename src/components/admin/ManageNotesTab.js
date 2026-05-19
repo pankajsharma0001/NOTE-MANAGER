@@ -28,21 +28,23 @@ export default function ManageNotesTab() {
     setTimeout(() => setToast(p => ({ ...p, show: false })), 3500);
   };
 
-  const fetchNotes = async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams();
-      if (semester) params.append("semester", semester);
-      if (subject) params.append("subject", subject);
-      const res = await fetch(`/api/admin/all-notes?${params}`);
-      const data = await res.json();
-      if (data.success) setNotes(data.data);
-      else setNotes([]);
-    } catch { setNotes([]); }
-    setLoading(false);
-  };
+  useEffect(() => {
+    const fetchNotes = async () => {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams();
+        if (semester) params.append("semester", semester);
+        if (subject) params.append("subject", subject);
+        const res = await fetch(`/api/admin/all-notes?${params}`);
+        const data = await res.json();
+        if (data.success) setNotes(data.data);
+        else setNotes([]);
+      } catch { setNotes([]); }
+      setLoading(false);
+    };
 
-  useEffect(() => { fetchNotes(); }, [semester, subject]);
+    fetchNotes();
+  }, [semester, subject]);
 
   const openEdit = (note) => {
     setEditNote(note);
@@ -164,7 +166,7 @@ export default function ManageNotesTab() {
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
           <div className="bg-gray-900 p-6 rounded-xl w-full max-w-sm text-center">
             <p className="text-lg font-semibold mb-2">Delete this note?</p>
-            <p className="text-gray-400 text-sm mb-4">This action cannot be undone. The note will also be removed from all users' favorites.</p>
+            <p className="text-gray-400 text-sm mb-4">This action cannot be undone. The note will also be removed from all users&apos; favorites.</p>
             <div className="flex gap-3 justify-center">
               <button onClick={() => setDeleteId(null)} className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded">Cancel</button>
               <button onClick={handleDelete} disabled={deleting} className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded font-medium disabled:opacity-50">

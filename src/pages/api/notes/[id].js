@@ -3,6 +3,13 @@ import Note from "../../../models/Note";
 import User from "../../../models/User";
 import { noStore } from "../../../lib/apiCache";
 import { requireAdmin } from "../../../lib/serverAuth";
+import { v2 as cloudinary } from "cloudinary";
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_NAME,
+  api_key: process.env.CLOUDINARY_KEY,
+  api_secret: process.env.CLOUDINARY_SECRET,
+});
 
 export default async function handler(req, res) {
   noStore(res);
@@ -59,11 +66,30 @@ export default async function handler(req, res) {
     if (!session) return;
 
     try {
-      const deleted = await Note.findByIdAndDelete(id);
+      const noteToDelete = await Note.findById(id);
 
-      if (!deleted) {
+      if (!noteToDelete) {
         return res.status(404).json({ success: false, message: "Note not found" });
       }
+
+      // If there's a Cloudinary file URL, delete it from Cloudinary
+      if (noteToDelete.fileUrl && noteToDelete.fileUrl.includes('cloudinary.com')) {
+        try {
+          const urlParts = noteToDelete.fileUrl.split('/upload/');
+          if (urlParts.length > 1) {
+            // Remove the version string and extension to get the public_id
+            const pathAndFile = urlParts[1].split('/').slice(1).join('/'); 
+            const publicId = pathAndFile.substring(0, pathAndFile.lastIndexOf('.')) || pathAndFile;
+            
+            // Delete the file from Cloudinary
+            await cloudinary.uploader.destroy(publicId);
+          }
+        } catch (cloudinaryErr) {
+          console.error("Failed to delete from Cloudinary:", cloudinaryErr);
+        }
+      }
+
+      const deleted = await Note.findByIdAndDelete(id);
 
       // Clean up favorites referencing this note
       await User.updateMany(
