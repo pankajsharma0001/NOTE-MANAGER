@@ -59,14 +59,14 @@ export default function Notes() {
 
   return (
     <DashboardLayout>
-      <div className="flex flex-col mb-8 animate-slideInRight">
-        <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">Engineering Notes</h1>
-        <p className="text-gray-400 text-sm md:text-base">
+      <div className="flex flex-col mb-4 animate-slideInRight">
+        <h1 className="text-2xl md:text-3xl font-bold text-white mb-1">Engineering Notes</h1>
+        <p className="text-gray-400 text-xs md:text-sm">
           Find all computer engineering notes, resources, and syllabus properly organized by semester.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {semestersData.map((sem, index) => {
           const count = noteCounts[sem.slug];
           const isReady = !loading && count !== undefined;
@@ -75,21 +75,21 @@ export default function Notes() {
             <div
               key={sem.slug}
               onClick={() => router.push(`/notes/${sem.slug}`)}
-              className={`relative bg-gray-800 rounded-2xl p-6 cursor-pointer transform transition-all duration-300 hover:-translate-y-2 hover:shadow-xl ${sem.shadow} animate-fadeInUp overflow-hidden group`}
-              style={{ animationDelay: `${index * 0.1}s` }}
+              className={`relative bg-gray-800 rounded-xl p-4 cursor-pointer transform transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${sem.shadow} animate-fadeInUp overflow-hidden group`}
+              style={{ animationDelay: `${index * 0.05}s` }}
             >
               {/* Decorative background gradient */}
-              <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${sem.color} rounded-bl-full opacity-10 group-hover:opacity-20 transition-opacity duration-300`}></div>
+              <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br ${sem.color} rounded-bl-full opacity-10 group-hover:opacity-20 transition-opacity duration-300`}></div>
               
               <div className="relative z-10 flex flex-col h-full justify-between">
                 <div>
-                  <div className="flex justify-between items-start mb-4">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">
                       {sem.year}
                     </span>
-                    <div className={`p-2 rounded-lg bg-gradient-to-br ${sem.color} shadow-lg`}>
+                    <div className={`p-1.5 rounded-md bg-gradient-to-br ${sem.color} shadow-md`}>
                       <svg
-                        className="w-5 h-5 text-white"
+                        className="w-4 h-4 text-white"
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
@@ -101,27 +101,27 @@ export default function Notes() {
                       </svg>
                     </div>
                   </div>
-                  <h2 className="text-xl font-bold text-white mb-1 group-hover:text-teal-400 transition-colors">
+                  <h2 className="text-base sm:text-lg font-bold text-white mb-0.5 group-hover:text-teal-400 transition-colors">
                     {sem.name}
                   </h2>
-                  <p className="text-sm text-gray-400 mb-6">
+                  <p className="text-xs text-gray-400 mb-4">
                     {sem.subjectsCount} Subjects Available
                   </p>
                 </div>
 
-                <div className="flex items-center justify-between border-t border-gray-700 pt-4 mt-auto">
+                <div className="flex items-center justify-between border-t border-gray-700 pt-3 mt-auto">
                   <div className="flex flex-col">
-                    <span className="text-xs text-gray-500 mb-1">Total Notes</span>
+                    <span className="text-[10px] text-gray-500 mb-0.5">Total Notes</span>
                     {loading ? (
-                      <div className="h-6 w-12 bg-gray-700 rounded animate-shimmer"></div>
+                      <div className="h-5 w-10 bg-gray-700 rounded animate-shimmer"></div>
                     ) : (
-                      <span className="text-lg font-semibold text-white">
-                        {count} <span className="text-sm font-normal text-gray-400">{count === 1 ? 'Note' : 'Notes'}</span>
+                      <span className="text-sm font-semibold text-white">
+                        {count} <span className="text-xs font-normal text-gray-400">{count === 1 ? 'Note' : 'Notes'}</span>
                       </span>
                     )}
                   </div>
-                  <div className="text-gray-400 group-hover:text-white transition-colors transform group-hover:translate-x-1 duration-300">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="text-gray-400 group-hover:text-white transition-colors transform group-hover:translate-x-0.5 duration-300">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                     </svg>
                   </div>

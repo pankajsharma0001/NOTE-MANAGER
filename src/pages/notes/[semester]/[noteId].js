@@ -36,6 +36,7 @@ export default function NoteDetail() {
   // Fetch note data
   const { data, error, mutate } = useSWR(noteId ? `/api/notes/${noteId}` : null, fetcher, { revalidateOnFocus: false });
   const note = data?.data;
+  const isImage = note?.fileUrl && /\.(jpeg|jpg|gif|png|webp|svg|bmp)(\?.*)?$/i.test(note.fileUrl);
 
   // Mark note as read
   useEffect(() => {
@@ -137,10 +138,17 @@ export default function NoteDetail() {
     <div className="flex h-screen w-full bg-gray-900 text-white overflow-hidden relative font-sans">
 
 
-      {/* Main Content Area (PDF Viewer) */}
+      {/* Main Content Area (PDF/Image Viewer) */}
       <div className="flex-1 h-full w-full bg-black relative z-10 transition-all duration-300">
         {note.fileUrl ? (
-          <iframe ref={iframeRef} src={note.fileUrl} className="w-full h-full border-none bg-white"></iframe>
+          isImage ? (
+            <div className="w-full h-full flex items-center justify-center bg-black p-4">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={note.fileUrl} alt={note.title} className="max-w-full max-h-full object-contain rounded-lg shadow-2xl" />
+            </div>
+          ) : (
+            <iframe ref={iframeRef} src={note.fileUrl} className="w-full h-full border-none bg-white"></iframe>
+          )
         ) : (
           <div className="w-full h-full flex items-center justify-center text-gray-500 bg-gray-900">No document attached</div>
         )}
@@ -164,9 +172,9 @@ export default function NoteDetail() {
         {/* Edge Toggle Button */}
         <button 
           onClick={() => setIsDetailsOpen(!isDetailsOpen)} 
-          className="flex absolute top-1/2 -left-6 w-6 h-20 bg-gray-800 hover:bg-gray-700 rounded-l-xl items-center justify-center -translate-y-1/2 cursor-pointer z-50 transition-colors shadow-lg border border-r-0 border-gray-700"
+          className="flex absolute top-1/2 -left-8 w-8 h-20 bg-gray-950 hover:bg-gray-900 rounded-l-xl items-center justify-end pr-2.5 -translate-y-1/2 cursor-pointer z-50 transition-colors shadow-2xl border border-gray-800"
         >
-          <span className="text-white text-sm font-bold">{isDetailsOpen ? '>' : '<'}</span>
+          <span className="text-teal-400 text-base font-extrabold">{isDetailsOpen ? '>' : '<'}</span>
         </button>
 
         <div className={`transition-opacity duration-300 w-full h-full pt-6 pb-6 px-6 overflow-y-auto overflow-x-hidden ${isDetailsOpen ? 'opacity-100' : 'opacity-0 hidden lg:block pointer-events-none'}`}>
