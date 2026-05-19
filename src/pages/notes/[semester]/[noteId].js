@@ -26,12 +26,18 @@ export default function NoteDetail() {
   const iframeRef = useRef(null);
   const isAdmin = session?.user?.role === "admin";
 
-  // Admin state
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState({});
   const [saving, setSaving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  // Collapse details panel by default on mobile screens
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth < 1024) {
+      setIsDetailsOpen(false);
+    }
+  }, []);
 
   // Fetch note data
   const { data, error, mutate } = useSWR(noteId ? `/api/notes/${noteId}` : null, fetcher, { revalidateOnFocus: false });
@@ -135,11 +141,11 @@ export default function NoteDetail() {
   if (!data || !session) return <div>Loading...</div>;
 
   return (
-    <div className="flex h-screen w-full bg-gray-900 text-white overflow-hidden relative font-sans">
+    <div className="flex flex-col lg:flex-row h-screen w-full bg-gray-900 text-white overflow-hidden relative font-sans">
 
 
       {/* Main Content Area (PDF/Image Viewer) */}
-      <div className="flex-1 h-full w-full bg-black relative z-10 transition-all duration-300">
+      <div className={`flex-grow w-full bg-black relative z-10 transition-all duration-300 ${isDetailsOpen ? 'h-[60dvh] lg:h-full' : 'h-full'}`}>
         {note.fileUrl ? (
           isImage ? (
             <div className="w-full h-full flex items-center justify-center bg-black p-4">
@@ -162,19 +168,25 @@ export default function NoteDetail() {
         />
       )}
 
-      {/* Collapsible Details Panel */}
+      {/* Collapsible Details Panel (Bottom Sheet on Mobile, Sidebar on Desktop) */}
       <div className={`
-        fixed lg:static top-0 right-0 h-full bg-gray-900 lg:bg-gray-800 flex-shrink-0 z-30 shadow-2xl lg:shadow-none
-        transition-all duration-300 ease-in-out
-        ${isDetailsOpen ? 'w-[320px] md:w-[400px] lg:w-1/3 xl:w-1/4 translate-x-0' : 'w-[320px] md:w-[400px] lg:w-0 translate-x-full lg:translate-x-0'}
+        fixed lg:relative bottom-0 left-0 w-full lg:h-full lg:bg-gray-800 flex-shrink-0 z-30 shadow-2xl lg:shadow-none
+        transition-all duration-300 ease-in-out lg:overflow-visible
+        ${isDetailsOpen ? 'bg-gray-950/50 backdrop-blur-lg lg:backdrop-blur-none' : 'bg-transparent backdrop-blur-none'}
+        ${isDetailsOpen ? 'h-[40dvh] translate-y-0 lg:translate-y-0 lg:translate-x-0 w-full lg:w-1/3 xl:w-1/4' : 'h-[40dvh] translate-y-full lg:translate-y-0 lg:-translate-x-8 w-full lg:w-0'}
       `}>
         
         {/* Edge Toggle Button */}
         <button 
           onClick={() => setIsDetailsOpen(!isDetailsOpen)} 
-          className="flex absolute top-1/2 -left-8 w-8 h-20 bg-gray-950 hover:bg-gray-900 rounded-l-xl items-center justify-end pr-2.5 -translate-y-1/2 cursor-pointer z-50 transition-colors shadow-2xl border border-gray-800"
+          className="flex absolute bg-gray-950/90 hover:bg-gray-900 border border-gray-800 shadow-2xl transition-all duration-300 cursor-pointer z-50
+            top-0 -translate-y-full left-1/2 -translate-x-1/2 w-14 h-7 rounded-t-lg justify-center items-center pb-0.5 border-b-0
+            lg:top-1/2 lg:left-auto lg:-left-8 lg:-translate-y-1/2 lg:translate-x-0 lg:w-8 lg:h-20 lg:rounded-l-xl lg:rounded-tr-none lg:justify-end lg:pr-2.5 lg:pb-0"
         >
-          <span className="text-teal-400 text-base font-extrabold">{isDetailsOpen ? '>' : '<'}</span>
+          <span className="text-teal-400 text-xs lg:text-base font-extrabold flex items-center justify-center">
+            <span className="lg:hidden">{isDetailsOpen ? 'v' : '^'}</span>
+            <span className="hidden lg:inline">{isDetailsOpen ? '>' : '<'}</span>
+          </span>
         </button>
 
         <div className={`transition-opacity duration-300 w-full h-full pt-6 pb-6 px-6 overflow-y-auto overflow-x-hidden ${isDetailsOpen ? 'opacity-100' : 'opacity-0 hidden lg:block pointer-events-none'}`}>
