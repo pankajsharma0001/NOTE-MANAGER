@@ -19,8 +19,12 @@ export default async function handler(req, res) {
 
   if (req.method === "GET") {
     try {
-      // Populate uploadedBy to get name, email, and image
-      const note = await Note.findById(id).populate("uploadedBy", "name email image");
+      // Populate uploadedBy to get name, email, and image. Also increment view count.
+      const note = await Note.findByIdAndUpdate(
+        id, 
+        { $inc: { views: 1 } },
+        { new: true }
+      ).populate("uploadedBy", "name email image");
 
       if (!note) {
         return res.status(404).json({ success: false, message: "Note not found" });

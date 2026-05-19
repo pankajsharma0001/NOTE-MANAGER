@@ -64,6 +64,36 @@ export default function NoteDetail() {
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
+  const handleVote = async (action) => {
+    if (!session?.user) {
+      alert("Please login to vote");
+      return;
+    }
+    
+    try {
+      const res = await fetch("/api/notes/vote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ noteId: note._id, action }),
+      });
+      const d = await res.json();
+      if (d.success) {
+        // Update local SWR cache
+        const newUpvotes = d.hasUpvoted 
+          ? [...(note.upvotes || []).filter(id => id !== session.user.id), session.user.id]
+          : (note.upvotes || []).filter(id => id !== session.user.id);
+        
+        const newDownvotes = d.hasDownvoted 
+          ? [...(note.downvotes || []).filter(id => id !== session.user.id), session.user.id]
+          : (note.downvotes || []).filter(id => id !== session.user.id);
+
+        mutate({ ...data, data: { ...note, upvotes: newUpvotes, downvotes: newDownvotes } }, false);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   // Admin handlers
   const startEdit = () => {
     setEditForm({ title: note.title, subject: note.subject, semester: note.semester, content: note.content || "", fileUrl: note.fileUrl || "" });
@@ -167,6 +197,30 @@ export default function NoteDetail() {
               {note.semester && <p className="flex flex-col sm:flex-row sm:items-center"><span className="font-semibold min-w-[100px]">Semester:</span><span className="ml-0 sm:ml-2">{note.semester}</span></p>}
             </div>
             {note.content && <p className="mt-4 text-gray-300 break-words">{note.content}</p>}
+
+            {/* Views & Votes */}
+            <div className="flex items-center gap-6 mt-6 border-t border-gray-700 pt-4 text-gray-400">
+              <div className="flex items-center" title="Views">
+                <svg className="w-5 h-5 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                <span className="font-medium text-lg">{note.views || 0}</span>
+              </div>
+              <div className="flex items-center gap-4">
+                <button 
+                  onClick={() => handleVote("upvote")} 
+                  className={`flex items-center hover:text-teal-400 transition-colors ${note.upvotes?.includes(session?.user?.id) ? 'text-teal-400' : ''}`}
+                >
+                  <svg className="w-5 h-5 mr-1" fill="currentColor" viewBox="0 0 24 24"><path d="M2 20h4v-9H2v9zm20-8.5c0-1.1-.9-2-2-2h-6.3l.9-4.2.1-.3c0-.4-.2-.8-.4-1.1L13.2 3l-6.6 6.6c-.4.4-.6.9-.6 1.4v7c0 1.1.9 2 2 2h8.5c.8 0 1.5-.5 1.8-1.2l2.9-6.8c.1-.2.1-.5.1-.7v-1.5z"/></svg>
+                  <span className="font-medium text-lg">{note.upvotes?.length || 0}</span>
+                </button>
+                <button 
+                  onClick={() => handleVote("downvote")} 
+                  className={`flex items-center hover:text-red-400 transition-colors ${note.downvotes?.includes(session?.user?.id) ? 'text-red-400' : ''}`}
+                >
+                  <svg className="w-5 h-5 mr-1" fill="currentColor" viewBox="0 0 24 24"><path d="M22 4h-4v9h4V4zM2 12.5c0 1.1.9 2 2 2h6.3l-.9 4.2-.1.3c0 .4.2.8.4 1.1L10.8 21l6.6-6.6c.4-.4.6-.9.6-1.4v-7c0-1.1-.9-2-2-2H7.5c-.8 0-1.5.5-1.8 1.2l-2.9 6.8c-.1.2-.1.5-.1.7v1.5z"/></svg>
+                  <span className="font-medium text-lg">{note.downvotes?.length || 0}</span>
+                </button>
+              </div>
+            </div>
 
             {/* Admin Actions */}
             {isAdmin && (

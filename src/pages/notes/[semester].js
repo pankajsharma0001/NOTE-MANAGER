@@ -1,5 +1,6 @@
 import { useRouter } from "next/router";
 import { useEffect, useState, useRef } from "react";
+import { useSession } from "next-auth/react";
 import DashboardLayout from "../../components/DashboardLayout";
 
 // Subjects by semester
@@ -17,6 +18,7 @@ const subjectsBySemester = {
 export default function Semester() {
   const router = useRouter();
   const { semester, subject } = router.query;
+  const { data: session } = useSession();
   const scrollContainerRef = useRef(null);
 
   const [notes, setNotes] = useState([]);
@@ -107,6 +109,45 @@ export default function Semester() {
       } else {
         setUserFavorites([...userFavorites, noteId]);
       }
+    }
+  };
+
+  const handleVote = async (e, noteId, action) => {
+    e.stopPropagation();
+    if (!session?.user) {
+      alert("Please login to vote");
+      return;
+    }
+    
+    try {
+      const res = await fetch("/api/notes/vote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ noteId, action }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setNotes(notes.map(note => {
+          if (note._id === noteId) {
+            const newUpvotes = data.hasUpvoted 
+              ? [...(note.upvotes || []).filter(id => id !== session.user.id), session.user.id]
+              : (note.upvotes || []).filter(id => id !== session.user.id);
+            
+            const newDownvotes = data.hasDownvoted 
+              ? [...(note.downvotes || []).filter(id => id !== session.user.id), session.user.id]
+              : (note.downvotes || []).filter(id => id !== session.user.id);
+
+            return {
+              ...note,
+              upvotes: newUpvotes,
+              downvotes: newDownvotes
+            };
+          }
+          return note;
+        }));
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -327,6 +368,30 @@ export default function Semester() {
                   <p className="text-gray-400 text-sm line-clamp-3 mb-4 flex-1">
                     {note.content || "No description provided for this note."}
                   </p>
+                  
+                  {/* Views & Votes */}
+                  <div className="flex items-center gap-4 text-xs text-gray-400 mb-3 font-medium">
+                    <div className="flex items-center" title="Views">
+                      <svg className="w-4 h-4 mr-1 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                      {note.views || 0}
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button 
+                        onClick={(e) => handleVote(e, note._id, "upvote")} 
+                        className={`flex items-center hover:text-teal-400 transition-colors ${note.upvotes?.includes(session?.user?.id) ? 'text-teal-400' : ''}`}
+                      >
+                        <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 24 24"><path d="M2 20h4v-9H2v9zm20-8.5c0-1.1-.9-2-2-2h-6.3l.9-4.2.1-.3c0-.4-.2-.8-.4-1.1L13.2 3l-6.6 6.6c-.4.4-.6.9-.6 1.4v7c0 1.1.9 2 2 2h8.5c.8 0 1.5-.5 1.8-1.2l2.9-6.8c.1-.2.1-.5.1-.7v-1.5z"/></svg>
+                        {note.upvotes?.length || 0}
+                      </button>
+                      <button 
+                        onClick={(e) => handleVote(e, note._id, "downvote")} 
+                        className={`flex items-center hover:text-red-400 transition-colors ${note.downvotes?.includes(session?.user?.id) ? 'text-red-400' : ''}`}
+                      >
+                        <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 24 24"><path d="M22 4h-4v9h4V4zM2 12.5c0 1.1.9 2 2 2h6.3l-.9 4.2-.1.3c0 .4.2.8.4 1.1L10.8 21l6.6-6.6c.4-.4.6-.9.6-1.4v-7c0-1.1-.9-2-2-2H7.5c-.8 0-1.5.5-1.8 1.2l-2.9 6.8c-.1.2-.1.5-.1.7v1.5z"/></svg>
+                        {note.downvotes?.length || 0}
+                      </button>
+                    </div>
+                  </div>
                   
                   <div className="mt-auto flex items-center justify-between border-t border-gray-700/50 pt-3">
                     <div className="flex items-center text-xs text-gray-500">
