@@ -22,6 +22,7 @@ export default function NoteDetail() {
   const { semester, noteId } = router.query;
   const { data: session } = useSession();
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(true);
   const iframeRef = useRef(null);
   const isAdmin = session?.user?.role === "admin";
 
@@ -33,7 +34,7 @@ export default function NoteDetail() {
   const [deleting, setDeleting] = useState(false);
 
   // Fetch note data
-  const { data, error, mutate } = useSWR(noteId ? `/api/notes/${noteId}` : null, fetcher);
+  const { data, error, mutate } = useSWR(noteId ? `/api/notes/${noteId}` : null, fetcher, { revalidateOnFocus: false });
   const note = data?.data;
 
   // Mark note as read
@@ -133,33 +134,56 @@ export default function NoteDetail() {
   if (!data || !session) return <div>Loading...</div>;
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen bg-gray-900 text-white">
-      {/* PDF viewer */}
-      {note.fileUrl && (
-        <div className="w-full lg:w-3/4 lg:h-screen flex-shrink-0 relative">
-          <iframe ref={iframeRef} src={note.fileUrl} className="w-full h-full min-h-screen lg:min-h-0" style={{ border: "none" }}></iframe>
-        </div>
+    <div className="flex h-screen w-full bg-gray-900 text-white overflow-hidden relative font-sans">
+
+
+      {/* Main Content Area (PDF Viewer) */}
+      <div className="flex-1 h-full w-full bg-black relative z-10 transition-all duration-300">
+        {note.fileUrl ? (
+          <iframe ref={iframeRef} src={note.fileUrl} className="w-full h-full border-none bg-white"></iframe>
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-gray-500 bg-gray-900">No document attached</div>
+        )}
+      </div>
+
+      {/* Sidebar Overlay for Mobile */}
+      {isDetailsOpen && (
+        <div 
+          className="lg:hidden fixed inset-0 bg-black/50 z-20 backdrop-blur-sm transition-opacity"
+          onClick={() => setIsDetailsOpen(false)}
+        />
       )}
 
-      {/* Details panel */}
-      <div className="w-full lg:w-1/4 bg-gray-800 p-4 lg:overflow-y-auto lg:h-screen flex-1">
-        <div className="flex gap-2">
-          <button onClick={() => router.back()}
-            className="flex-1 lg:flex-none px-4 py-2 bg-gradient-to-r from-teal-500 to-blue-500 text-white rounded-full shadow-lg hover:from-teal-400 hover:to-blue-400 hover:scale-105 transition-all flex items-center gap-2 justify-center">
-            <span className="text-lg">←</span><span className="font-medium">Back</span>
-          </button>
-          <button onClick={toggleFullscreen}
-            className="hidden lg:flex px-4 py-2 bg-gradient-to-r from-teal-500 to-blue-500 text-white rounded-full shadow-lg hover:from-teal-400 hover:to-blue-400 hover:scale-105 transition-all items-center gap-2 justify-center"
-            title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}>
-            {isFullscreen ? (
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V15a2 2 0 01-2 2h-2.28a1 1 0 01-.956-.692l-1.498-4.493a1 1 0 01.502-1.21l2.257-1.13a11.04 11.04 0 00-5.516-5.516l-1.13 2.257a1 1 0 01-1.21.502l-4.493-1.498A1 1 0 014 9.72V4z"/></svg>
-            ) : (
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M3 4a1 1 0 011-1h4a1 1 0 010 2H5.414l4.293 4.293a1 1 0 01-1.414 1.414L4 6.414V8a1 1 0 01-2 0V4zm12 0a1 1 0 01-1-1h-4a1 1 0 110-2h4a1 1 0 011 1v4a1 1 0 11-2 0V4zM4 16a1 1 0 011-1h4a1 1 0 110 2H5.414l4.293 4.293a1 1 0 11-1.414 1.414L4 17.414V16zm12 0a1 1 0 01-1-1v-4a1 1 0 112 0v4a1 1 0 01-1 1z"/></svg>
-            )}
-          </button>
-        </div>
+      {/* Collapsible Details Panel */}
+      <div className={`
+        fixed lg:static top-0 right-0 h-full bg-gray-900 lg:bg-gray-800 flex-shrink-0 z-30 shadow-2xl lg:shadow-none
+        transition-all duration-300 ease-in-out
+        ${isDetailsOpen ? 'w-[320px] md:w-[400px] lg:w-1/3 xl:w-1/4 translate-x-0' : 'w-[320px] md:w-[400px] lg:w-0 translate-x-full lg:translate-x-0'}
+      `}>
+        
+        {/* Edge Toggle Button */}
+        <button 
+          onClick={() => setIsDetailsOpen(!isDetailsOpen)} 
+          className="flex absolute top-1/2 -left-6 w-6 h-20 bg-gray-800 hover:bg-gray-700 rounded-l-xl items-center justify-center -translate-y-1/2 cursor-pointer z-50 transition-colors shadow-lg border border-r-0 border-gray-700"
+        >
+          <span className="text-white text-sm font-bold">{isDetailsOpen ? '>' : '<'}</span>
+        </button>
 
-        <h2 className="text-xl font-semibold mb-4 mt-4 text-teal-400">Note Details</h2>
+        <div className={`transition-opacity duration-300 w-full h-full pt-6 pb-6 px-6 overflow-y-auto overflow-x-hidden ${isDetailsOpen ? 'opacity-100' : 'opacity-0 hidden lg:block pointer-events-none'}`}>
+          <div className="flex items-center justify-between mb-6 border-b border-gray-700 pb-4">
+            <h2 className="text-xl font-bold text-white">Note Details</h2>
+            <div className="flex items-center gap-2">
+              {note.fileUrl && (
+                <button onClick={toggleFullscreen} className="p-2 text-gray-400 hover:text-white transition" title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}>
+                  {isFullscreen ? (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" /></svg>
+                  ) : (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" /></svg>
+                  )}
+                </button>
+              )}
+            </div>
+          </div>
 
         {/* Admin Edit Mode */}
         {editing ? (
@@ -242,6 +266,7 @@ export default function NoteDetail() {
             )}
           </>
         )}
+        </div>
       </div>
 
       {/* Delete Confirmation Modal */}
