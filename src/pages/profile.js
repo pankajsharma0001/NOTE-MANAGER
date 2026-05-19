@@ -2,10 +2,17 @@ import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/router";
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import useSWR from "swr";
+
+const fetcher = (url) => fetch(url).then((res) => res.json());
 
 export default function Profile({ embedded = false, onComplete }) {
   const { data: session, status, update } = useSession();
   const router = useRouter();
+
+  // Fetch gamification stats
+  const { data: statsData } = useSWR(status === "authenticated" ? "/api/user/profile-stats" : null, fetcher);
+  const stats = statsData?.data;
 
   const [editing, setEditing] = useState(false);
   const [isFirstTime, setIsFirstTime] = useState(false);
@@ -219,6 +226,82 @@ export default function Profile({ embedded = false, onComplete }) {
             )}
           </div>
         </div>
+
+        {/* Dynamic Gamification & Stats Dashboard */}
+        {stats && !editing && (
+          <div className="mt-8 pt-8 border-t border-gray-700 space-y-6">
+            <h3 className="text-xl font-bold text-white mb-4">🏆 Contribution Dashboard</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* Badge/Rank */}
+              <div className={`p-4 rounded-xl border bg-gradient-to-br flex flex-col justify-center items-center text-center shadow-lg ${stats.badge.color}`}>
+                <span className="text-xs uppercase font-semibold tracking-wider opacity-80">Current Rank</span>
+                <span className="text-lg font-bold mt-2">{stats.badge.name}</span>
+              </div>
+              
+              {/* Notes Contributed */}
+              <div className="p-4 rounded-xl border border-gray-700 bg-gray-900/50 flex flex-col justify-center items-center text-center shadow-lg">
+                <span className="text-xs text-gray-400 uppercase font-semibold tracking-wider">Notes Uploaded</span>
+                <span className="text-2xl font-bold text-teal-400 mt-2">{stats.notes.length}</span>
+              </div>
+
+              {/* Total Upvotes Received */}
+              <div className="p-4 rounded-xl border border-gray-700 bg-gray-900/50 flex flex-col justify-center items-center text-center shadow-lg">
+                <span className="text-xs text-gray-400 uppercase font-semibold tracking-wider">Upvotes Earned</span>
+                <span className="text-2xl font-bold text-emerald-400 mt-2">👍 {stats.totalUpvotes}</span>
+              </div>
+            </div>
+
+            {/* User Contributed Notes List */}
+            <div className="mt-8 space-y-4">
+              <h4 className="text-lg font-semibold text-white">📁 My Uploaded Notes</h4>
+              {stats.notes.length === 0 ? (
+                <p className="text-sm text-gray-400 bg-gray-900/30 p-4 rounded-lg border border-gray-700/50 text-center">
+                  You have not uploaded any notes yet. Shared notes will appear here once uploaded!
+                </p>
+              ) : (
+                <div className="overflow-x-auto rounded-xl border border-gray-700/50 shadow-inner bg-gray-900/30">
+                  <table className="w-full text-left text-sm text-gray-300">
+                    <thead className="text-xs uppercase bg-gray-950/40 text-gray-400">
+                      <tr>
+                        <th className="px-5 py-3 font-medium">Title</th>
+                        <th className="px-5 py-3 font-medium hidden sm:table-cell">Subject</th>
+                        <th className="px-5 py-3 font-medium text-center">Views</th>
+                        <th className="px-5 py-3 font-medium text-center">Upvotes</th>
+                        <th className="px-5 py-3 font-medium text-right">Link</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-800">
+                      {stats.notes.map((note) => (
+                        <tr key={note._id} className="hover:bg-gray-800/30 transition-colors">
+                          <td className="px-5 py-3 font-medium text-white max-w-[150px] truncate" title={note.title}>
+                            {note.title}
+                          </td>
+                          <td className="px-5 py-3 hidden sm:table-cell max-w-[120px] truncate text-gray-400" title={note.subject}>
+                            {note.subject}
+                          </td>
+                          <td className="px-5 py-3 text-center text-gray-400 font-medium">
+                            {note.views}
+                          </td>
+                          <td className="px-5 py-3 text-center text-emerald-400 font-semibold">
+                            {note.upvotes ? note.upvotes.length : 0}
+                          </td>
+                          <td className="px-5 py-3 text-right">
+                            <button
+                              onClick={() => router.push(`/notes/${note.semester}/${note._id}`)}
+                              className="text-teal-400 hover:text-teal-300 font-medium text-xs transition-colors"
+                            >
+                              View →
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
