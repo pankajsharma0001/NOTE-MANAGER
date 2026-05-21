@@ -15,7 +15,7 @@ export default async function handler(req, res) {
   await connectMongo();
 
   try {
-    const { name, semester, college, address, phone, profileComplete } = req.body;
+    const { name, semester, college, address, phone, profileComplete, image } = req.body;
 
     const updateFields = {};
     if (name !== undefined) updateFields.name = name;
@@ -24,6 +24,7 @@ export default async function handler(req, res) {
     if (address !== undefined) updateFields.address = address;
     if (phone !== undefined) updateFields.phone = phone;
     if (profileComplete !== undefined) updateFields.profileComplete = profileComplete;
+    if (image !== undefined) updateFields.image = image;
 
     const updatedUser = await User.findOneAndUpdate(
       { _id: session.user.id },
