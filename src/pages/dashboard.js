@@ -21,6 +21,51 @@ export default function Dashboard() {
   const [reminderTitle, setReminderTitle] = useState("Study Session");
   const [reminders, setReminders] = useState([]);
 
+  const timersRef = useRef({});
+
+  // Helper to schedule a single browser notification timer
+  const scheduleTimer = useCallback((reminder) => {
+    const delay = new Date(reminder.time) - new Date();
+    if (delay <= 0) return;
+
+    if (timersRef.current[reminder.time]) {
+      clearTimeout(timersRef.current[reminder.time]);
+    }
+
+    const timerId = setTimeout(() => {
+      if (typeof window !== "undefined" && "Notification" in window) {
+        if (Notification.permission === "granted") {
+          new Notification(reminder.title, {
+            body: "Time to study! Open your dashboard.",
+          });
+        }
+      }
+
+      // Remove from list/localStorage after firing
+      setReminders((prev) => {
+        const updated = prev.filter((r) => r.time !== reminder.time);
+        localStorage.setItem("study_reminders", JSON.stringify(updated));
+        return updated;
+      });
+
+      delete timersRef.current[reminder.time];
+    }, delay);
+
+    timersRef.current[reminder.time] = timerId;
+  }, []);
+
+  const deleteReminder = useCallback((time) => {
+    if (timersRef.current[time]) {
+      clearTimeout(timersRef.current[time]);
+      delete timersRef.current[time];
+    }
+    setReminders((prev) => {
+      const updated = prev.filter((r) => r.time !== time);
+      localStorage.setItem("study_reminders", JSON.stringify(updated));
+      return updated;
+    });
+  }, []);
+
   const timeSince = (date) => {
     if (!date) return "";
     const diff = Math.floor((new Date() - new Date(date)) / 1000);
@@ -73,6 +118,37 @@ export default function Dashboard() {
     }
   }, [status, session]);
 
+  // Load and reschedule reminders on mount
+  useEffect(() => {
+    const saved = localStorage.getItem("study_reminders");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        const now = new Date();
+        const active = [];
+
+        parsed.forEach((r) => {
+          const delay = new Date(r.time) - now;
+          if (delay > 0) {
+            active.push(r);
+            scheduleTimer(r);
+          }
+        });
+
+        setReminders(active);
+        localStorage.setItem("study_reminders", JSON.stringify(active));
+      } catch (err) {
+        console.error("Failed to parse study reminders:", err);
+      }
+    }
+
+    // Cleanup active timers on unmount
+    return () => {
+      Object.values(timersRef.current).forEach((timerId) => clearTimeout(timerId));
+      timersRef.current = {};
+    };
+  }, [scheduleTimer]);
+
   // Show loading while checking session
   if (status === "loading") {
     return (
@@ -117,22 +193,34 @@ export default function Dashboard() {
   const scheduleBrowserNotification = () => {
     if (!reminderTime) return;
 
-    const delay = new Date(reminderTime) - new Date();
-    if (delay > 0) {
-      Notification.requestPermission().then(() => {
-        setTimeout(() => {
-          new Notification(reminderTitle, {
-            body: "Time to study! Open your dashboard.",
-          });
-        }, delay);
+    const reminderDate = new Date(reminderTime);
+    const delay = reminderDate - new Date();
+
+    if (delay <= 0) {
+      alert("❌ Please select a future time.");
+      return;
+    }
+
+    const newReminder = { title: reminderTitle, time: reminderTime.toISOString() };
+
+    // Request notification permission and schedule timer
+    if (typeof window !== "undefined" && "Notification" in window) {
+      Notification.requestPermission().then((permission) => {
+        if (permission === "granted") {
+          scheduleTimer(newReminder);
+        } else {
+          alert("⚠️ Notification permission is required for browser alerts.");
+        }
       });
     }
 
-    // Add to local reminders array
-    setReminders((prev) => [
-      ...prev,
-      { title: reminderTitle, time: reminderTime },
-    ]);
+    // Add to state and localStorage
+    setReminders((prev) => {
+      const updated = [...prev, newReminder];
+      localStorage.setItem("study_reminders", JSON.stringify(updated));
+      return updated;
+    });
+
     setReminderTime(null);
     setReminderTitle("Study Session");
     setShowReminderModal(false);
@@ -241,7 +329,7 @@ export default function Dashboard() {
           {/* Ambient Glow Blobs */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500/10 rounded-full blur-[80px] pointer-events-none" />
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-emerald-500/5 rounded-full blur-[60px] pointer-events-none" />
-          
+
           <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
@@ -249,7 +337,7 @@ export default function Dashboard() {
               </h2>
               <p className="text-gray-400 text-sm mt-1">
                 {session.user.semester
-                  ? `${session.user.semester} Semester · ${session.user.college || "IOE Pulchowk"}`
+                  ? `${session.user.semester} Semester · ${session.user.college || "Setup Your College"}`
                   : "Complete your profile to get personalized content"}
               </p>
             </div>
@@ -369,7 +457,7 @@ export default function Dashboard() {
               {reminders.map((r, idx) => (
                 <div
                   key={idx}
-                  className="bg-gray-800/60 p-4 rounded-xl border border-gray-700/30 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2"
+                  className="bg-gray-800/60 p-4 rounded-xl border border-gray-700/30 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 animate-fadeInUp"
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-amber-500/15 flex items-center justify-center flex-shrink-0">
@@ -380,16 +468,24 @@ export default function Dashboard() {
                       <p className="text-xs text-gray-500">{new Date(r.time).toLocaleString()}</p>
                     </div>
                   </div>
-                  <a
-                    href={`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
-                      r.title
-                    )}&dates=${formatForGoogleCalendar(r.time)}/${formatForGoogleCalendar(r.time)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-400 hover:text-blue-300 text-xs font-semibold transition"
-                  >
-                    📅 Add to Calendar
-                  </a>
+                  <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+                    <a
+                      href={`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
+                        r.title
+                      )}&dates=${formatForGoogleCalendar(r.time)}/${formatForGoogleCalendar(r.time)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-400 hover:text-blue-300 text-xs font-semibold transition"
+                    >
+                      📅 Add to Calendar
+                    </a>
+                    <button
+                      onClick={() => deleteReminder(r.time)}
+                      className="text-red-400 hover:text-red-300 text-xs font-semibold transition cursor-pointer"
+                    >
+                      🗑️ Delete
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

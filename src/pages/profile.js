@@ -48,7 +48,7 @@ export default function Profile({ embedded = false, onComplete }) {
       if (
         !session.user.profileComplete &&
         (!session.user.semester || !session.user.college ||
-         !session.user.address || !session.user.phone)
+          !session.user.address || !session.user.phone)
       ) {
         setIsFirstTime(true);
         setEditing(true);
@@ -157,12 +157,12 @@ export default function Profile({ embedded = false, onComplete }) {
     setAvatarUploading(true);
     try {
       const publicId = `avatars/${session.user.id}-${Date.now()}`;
-      
+
       // 1. Get signature from backend
       const params = new URLSearchParams({ publicId });
       const sigRes = await fetch(`/api/share/upload?${params.toString()}`);
       const { signature, timestamp } = await sigRes.json();
-      
+
       if (!signature) throw new Error("Could not generate signature");
 
       // 2. Upload directly to Cloudinary
@@ -259,7 +259,7 @@ export default function Profile({ embedded = false, onComplete }) {
       <div className="absolute bottom-0 left-0 w-80 h-80 bg-emerald-500/10 rounded-full blur-[100px] pointer-events-none" />
 
       <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-8">
-        
+
         {/* Avatar block with interactive uploader */}
         <div className="relative group flex-shrink-0">
           <div className="relative w-28 h-28 sm:w-36 sm:h-36 rounded-full overflow-hidden ring-4 ring-teal-500/20 group-hover:ring-teal-400/40 transition-all duration-300">
@@ -287,7 +287,7 @@ export default function Profile({ embedded = false, onComplete }) {
                 />
               </label>
             )}
-            
+
             {/* Uploading loading overlay */}
             {avatarUploading && (
               <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center gap-2">
@@ -305,21 +305,19 @@ export default function Profile({ embedded = false, onComplete }) {
             <div className="flex gap-2 p-1 bg-gray-900/60 rounded-xl border border-gray-800/80 mb-6 max-w-xs mx-auto md:mx-0">
               <button
                 onClick={() => setActiveTab("info")}
-                className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 text-xs sm:text-sm font-bold rounded-lg transition-all duration-200 ${
-                  activeTab === "info"
+                className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 text-xs sm:text-sm font-bold rounded-lg transition-all duration-200 ${activeTab === "info"
                     ? "bg-gradient-to-r from-teal-500 to-emerald-600 text-white shadow-lg shadow-teal-500/10"
                     : "text-gray-400 hover:text-gray-200"
-                }`}
+                  }`}
               >
                 👤 Details
               </button>
               <button
                 onClick={() => setActiveTab("contributions")}
-                className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 text-xs sm:text-sm font-bold rounded-lg transition-all duration-200 ${
-                  activeTab === "contributions"
+                className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 text-xs sm:text-sm font-bold rounded-lg transition-all duration-200 ${activeTab === "contributions"
                     ? "bg-gradient-to-r from-teal-500 to-emerald-600 text-white shadow-lg shadow-teal-500/10"
                     : "text-gray-400 hover:text-gray-200"
-                }`}
+                  }`}
               >
                 🏆 Contributions
               </button>
@@ -336,18 +334,26 @@ export default function Profile({ embedded = false, onComplete }) {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {[
-                  { label: "Semester", val: semester ? `${semester} Semester` : "Not specified", icon: (
-                    <svg className="w-5 h-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l9-5-9-5-9 5 9 5z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" /></svg>
-                  ) },
-                  { label: "College", val: college || "Not specified", icon: (
-                    <svg className="w-5 h-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5" /></svg>
-                  ) },
-                  { label: "Address", val: address || "Not specified", icon: (
-                    <svg className="w-5 h-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                  ) },
-                  { label: "Phone", val: phone || "Not specified", icon: (
-                    <svg className="w-5 h-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.94.725l.548 2.2a1 1 0 01-.321.988l-1.305.98a10.582 10.582 0 004.872 4.872l.98-1.305a1 1 0 01.988-.321l2.2.548a1 1 0 01.725.94V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
-                  ) },
+                  {
+                    label: "Semester", val: semester ? `${semester} Semester` : "Not specified", icon: (
+                      <svg className="w-5 h-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l9-5-9-5-9 5 9 5z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" /></svg>
+                    )
+                  },
+                  {
+                    label: "College", val: college || "Not specified", icon: (
+                      <svg className="w-5 h-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5" /></svg>
+                    )
+                  },
+                  {
+                    label: "Address", val: address || "Not specified", icon: (
+                      <svg className="w-5 h-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                    )
+                  },
+                  {
+                    label: "Phone", val: phone || "Not specified", icon: (
+                      <svg className="w-5 h-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.94.725l.548 2.2a1 1 0 01-.321.988l-1.305.98a10.582 10.582 0 004.872 4.872l.98-1.305a1 1 0 01.988-.321l2.2.548a1 1 0 01.725.94V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+                    )
+                  },
                 ].map((item, idx) => (
                   <div key={idx} className="flex items-center gap-3 p-3 bg-gray-900/30 rounded-xl border border-gray-700/30">
                     <div className="p-2 bg-teal-500/10 rounded-lg flex-shrink-0">
@@ -406,7 +412,7 @@ export default function Profile({ embedded = false, onComplete }) {
                     <span className="text-gray-400">Rank Progress</span>
                     <span className="text-teal-400 font-bold">{progressInfo.label}</span>
                   </div>
-                  
+
                   {/* Outer Bar */}
                   <div className="w-full bg-gray-800 rounded-full h-2.5 overflow-hidden">
                     <div
@@ -414,7 +420,7 @@ export default function Profile({ embedded = false, onComplete }) {
                       style={{ width: `${progressInfo.progress}%` }}
                     />
                   </div>
-                  
+
                   {progressInfo.next && (
                     <p className="text-[11px] text-gray-500 text-right">
                       Next Rank: <span className="text-gray-300 font-medium">{progressInfo.next}</span>
@@ -551,7 +557,7 @@ export default function Profile({ embedded = false, onComplete }) {
                       value={college}
                       onChange={(e) => setCollege(e.target.value)}
                       className="w-full pl-9 pr-4 py-2 rounded-xl bg-gray-900/50 text-gray-100 border border-gray-700/80 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition text-sm"
-                      placeholder="e.g. Pulchowk Campus"
+                      placeholder="e.g. Universal College"
                     />
                   </div>
                 </div>
@@ -636,14 +642,14 @@ export default function Profile({ embedded = false, onComplete }) {
   return (
     <DashboardLayout>
       <div className="max-w-4xl mx-auto py-6 px-4 pb-24 sm:pb-8">
-        
+
         {/* Header toolbar */}
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Profile Details</h1>
             <p className="text-gray-400 text-xs mt-1">Manage your student profile info and track upload stats</p>
           </div>
-          
+
           <div className="flex items-center gap-3">
             <button
               onClick={() => router.back()}
