@@ -66,7 +66,7 @@ export default function DashboardLayout({ children }) {
   return (
     <div className="flex h-screen overflow-hidden bg-gray-900 text-gray-100">
       {/* Sidebar */}
-      <aside className="bg-gray-950 text-white flex md:flex-col flex-row md:w-16 w-full fixed md:top-0 bottom-0 md:left-0 left-0 z-50 md:h-screen h-16 md:py-6 py-2 md:space-y-6 space-x-6 md:space-x-0 justify-around md:justify-start items-center">
+      <aside className="bg-gray-950 text-white flex md:flex-col flex-row md:w-16 w-full fixed md:top-0 bottom-0 md:left-0 left-0 z-50 md:h-screen h-16 md:py-6 py-2 px-4 md:px-0 md:space-y-6 space-x-0 md:space-x-0 justify-around md:justify-start items-center">
         {sidebarItems.map((item, index) => (
           <div
             key={index}
@@ -102,15 +102,15 @@ export default function DashboardLayout({ children }) {
               flex-1 
               min-w-0       
               md:ml-16 ml-0 
-              md:px-8 px-4  
+              md:px-8 px-2  
               md:pt-8 pt-2 
-              md:pb-0 pb-12
+              md:pb-0 pb-20
               h-full overflow-y-auto overflow-x-hidden
             "
         key={router.asPath}
       >
         {/* Header */}
-        <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
+        <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 md:mb-8">
           <div className="flex items-center justify-between w-full">
             <div>
               <h2 className="text-gray-400 text-lg">{greeting}</h2>
@@ -155,7 +155,7 @@ export default function DashboardLayout({ children }) {
               )}
             </div>
           </div>
-          
+
           {/* Mobile Global Search (visible only on small screens) */}
           <div className="block sm:hidden w-full mt-4 px-2 flex justify-center">
             <SearchBar />
