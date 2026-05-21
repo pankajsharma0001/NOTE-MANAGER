@@ -14,6 +14,7 @@ export default function SharePage() {
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState({ message: "", type: "", show: false });
   const [isDesktop, setIsDesktop] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
   const contentRef = useRef(null);
 
   // detect desktop
@@ -81,10 +82,21 @@ export default function SharePage() {
     else setPreview(null);
   };
 
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
   const handleDrop = (e) => {
     if (!isDesktop) return;
     e.preventDefault();
     e.stopPropagation();
+    setDragActive(false);
     const droppedFile = e.dataTransfer.files[0];
     if (droppedFile) handleFileSelect(droppedFile);
   };
@@ -185,145 +197,282 @@ export default function SharePage() {
 
   return (
     <DashboardLayout>
-      <div className="flex justify-center items-start pt-4 sm:pt-12 px-4 pb-20 md:pb-0">
-        <form
-          onSubmit={handleSubmit}
-          onDragOver={(e) => isDesktop && e.preventDefault()}
-          onDrop={handleDrop}
-          className="bg-gray-800 p-6 sm:p-8 rounded-xl shadow-lg w-full max-w-lg flex flex-col gap-4 relative"
-        >
-          <h1 className="text-2xl sm:text-3xl font-bold text-center text-white">Share a Note</h1>
+      <div className="flex justify-center px-4">
+        <div className="relative w-full max-w-lg">
+          {/* Decorative ambient background glows */}
+          <div className="absolute -top-8 -right-8 w-72 h-72 bg-teal-500/10 rounded-full blur-[80px] pointer-events-none" />
+          <div className="absolute -bottom-8 -left-8 w-72 h-72 bg-emerald-500/10 rounded-full blur-[80px] pointer-events-none" />
 
-          {/* Title + Semester */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <input
-              type="text"
-              name="title"
-              placeholder="Title"
-              className="p-2 rounded bg-gray-700 w-full h-10 text-white"
-              value={form.title}
-              onChange={handleChange}
-              required
-            />
-            <select
-              name="semester"
-              className="p-2 rounded bg-gray-700 w-full h-10 text-white"
-              value={form.semester}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Select Semester</option>
-              {[...Array(8)].map((_, i) => (
-                <option key={i + 1} value={i + 1}>
-                  {i + 1} Semester
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Subject + Content */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <select
-              name="subject"
-              className={`p-2 rounded bg-gray-700 w-full h-10 text-white ${!form.semester ? "bg-gray-600 cursor-not-allowed" : ""}`}
-              value={form.subject}
-              onChange={handleChange}
-              disabled={!form.semester}
-              required
-            >
-              <option value="">{form.semester ? "Select Subject" : "Select Semester first"}</option>
-              {form.semester &&
-                subjectsBySemester[form.semester].map((subj, idx) => (
-                  <option key={idx} value={subj}>{subj}</option>
-                ))}
-            </select>
-
-            <textarea
-              ref={contentRef}
-              name="content"
-              placeholder="Content / Description"
-              className="p-2 rounded bg-gray-700 w-full resize-none overflow-hidden text-white transition-all duration-200"
-              style={{ minHeight: "2.5rem" }}
-              value={form.content}
-              onChange={handleChange}
-            />
-          </div>
-
-          {/* Upload area */}
-          <div
-            className={`flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-6 text-center transition-all duration-300 ${file ? "border-teal-500 bg-gray-700/40" : "border-gray-600 hover:border-teal-400 hover:bg-gray-700/20"
-              }`}
-            onClick={() => document.getElementById("fileInput").click()}
+          <form
+            onSubmit={handleSubmit}
+            className="bg-gray-800/40 backdrop-blur-md border border-gray-700/50 p-4 sm:p-5 rounded-2xl shadow-2xl w-full flex flex-col gap-3 relative z-10 animate-fadeInUp"
           >
-            <input
-              type="file"
-              id="fileInput"
-              accept="application/pdf,image/jpeg,image/png,image/webp"
-              className="hidden"
-              onChange={(e) => handleFileSelect(e.target.files[0])}
-            />
-            {!file ? (
-              <p className="text-gray-400">
-                {isDesktop ? "📂 Drag & drop or click to upload" : "📁 Tap to choose a file"}
-              </p>
-            ) : (
-              <div className="flex flex-col items-center">
-                {preview && (
-                  <Image
-                    src={preview}
-                    alt="preview"
-                    width={96}
-                    height={96}
-                    unoptimized={preview.startsWith("blob:")}
-                    className="w-24 h-24 object-contain mb-2 rounded"
-                  />
-                )}
-                <p className="text-gray-300 font-medium truncate max-w-[200px]">{file.name}</p>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setFile(null);
-                    if (preview?.startsWith("blob:")) URL.revokeObjectURL(preview);
-                    setPreview(null);
-                  }}
-                  className="mt-2 px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition"
-                >
-                  Remove
-                </button>
+            <div className="text-center mb-1">
+              <h1 className="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-emerald-400">
+                Share a Note
+              </h1>
+            </div>
+
+            {/* Note Title */}
+            <div className="relative flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-wider pl-1">Note Title</label>
+              <div className="relative flex items-center">
+                <span className="absolute left-3.5 text-gray-400">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </span>
+                <input
+                  type="text"
+                  name="title"
+                  placeholder="e.g. Applied Mechanics Chapter 3"
+                  className="pl-11 pr-4 py-2 rounded-xl bg-gray-900/60 border border-gray-700/60 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 w-full text-white placeholder-gray-500 transition-all duration-200 outline-none"
+                  value={form.title}
+                  onChange={handleChange}
+                  required
+                />
               </div>
-            )}
-          </div>
+            </div>
 
-          {/* Submit */}
-          <button
-            type="submit"
-            className={`w-full py-2 rounded-lg font-semibold flex items-center justify-center gap-2 transition text-white ${loading ? "bg-gray-500 cursor-not-allowed" : "bg-teal-500 hover:bg-teal-600"
-              }`}
-            disabled={loading}
-          >
-            {loading && (
-              <svg
-                className="animate-spin h-5 w-5 text-white"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
-              </svg>
-            )}
-            {loading ? "Uploading..." : "Submit"}
-          </button>
+            {/* Semester + Subject */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Semester */}
+              <div className="relative flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-gray-400 uppercase tracking-wider pl-1">Semester</label>
+                <div className="relative flex items-center">
+                  <span className="absolute left-3.5 text-gray-400 pointer-events-none">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                  </span>
+                  <select
+                    name="semester"
+                    className="pl-11 pr-9 py-2 rounded-xl bg-gray-900/60 border border-gray-700/60 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 w-full text-white appearance-none cursor-pointer transition-all duration-200 outline-none"
+                    value={form.semester}
+                    onChange={handleChange}
+                    required
+                  >
+                    <option value="" className="bg-gray-800 text-gray-400">Select Semester</option>
+                    {[...Array(8)].map((_, i) => (
+                      <option key={i + 1} value={i + 1} className="bg-gray-800 text-white">
+                        Semester {i + 1}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="absolute right-3.5 text-gray-400 pointer-events-none">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </span>
+                </div>
+              </div>
+
+              {/* Subject */}
+              <div className="relative flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-gray-400 uppercase tracking-wider pl-1">Subject</label>
+                <div className="relative flex items-center">
+                  <span className="absolute left-3.5 text-gray-400 pointer-events-none">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 14l9-5-9-5-9 5 9 5z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+                    </svg>
+                  </span>
+                  <select
+                    name="subject"
+                    className={`pl-11 pr-9 py-2 rounded-xl bg-gray-900/60 border border-gray-700/60 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 w-full text-white appearance-none cursor-pointer transition-all duration-200 outline-none ${!form.semester ? "opacity-50 cursor-not-allowed" : ""}`}
+                    value={form.subject}
+                    onChange={handleChange}
+                    disabled={!form.semester}
+                    required
+                  >
+                    <option value="" className="bg-gray-800 text-gray-400">
+                      {form.semester ? "Select Subject" : "Select Semester first"}
+                    </option>
+                    {form.semester &&
+                      subjectsBySemester[form.semester].map((subj, idx) => (
+                        <option key={idx} value={subj} className="bg-gray-800 text-white">{subj}</option>
+                      ))}
+                  </select>
+                  <span className="absolute right-3.5 text-gray-400 pointer-events-none">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Description */}
+            <div className="relative flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-wider pl-1">Description (Optional)</label>
+              <div className="relative flex items-start">
+                <span className="absolute left-3.5 top-3.5 text-gray-400">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h7" />
+                  </svg>
+                </span>
+                <textarea
+                  ref={contentRef}
+                  name="content"
+                  placeholder="Describe the content of this note..."
+                  className="pl-11 pr-4 py-2 rounded-xl bg-gray-900/60 border border-gray-700/60 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 w-full resize-none overflow-hidden text-white placeholder-gray-500 transition-all duration-200 outline-none"
+                  style={{ minHeight: "2.5rem" }}
+                  value={form.content}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+
+            {/* File Upload Area */}
+            <div className="relative flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-wider pl-1">Attachment</label>
+              {!file ? (
+                <div
+                  onDragEnter={handleDrag}
+                  onDragOver={handleDrag}
+                  onDragLeave={handleDrag}
+                  onDrop={handleDrop}
+                  className={`relative flex flex-col items-center justify-center border-2 border-dashed rounded-2xl p-4 text-center transition-all duration-300 cursor-pointer overflow-hidden group select-none
+                    ${dragActive
+                      ? "border-teal-400 bg-teal-500/10 scale-[1.02] shadow-[0_0_20px_rgba(20,184,166,0.15)]"
+                      : "border-gray-700/80 hover:border-teal-500/60 hover:bg-teal-500/5 hover:shadow-[0_0_15px_rgba(20,184,166,0.05)]"
+                    }`}
+                  onClick={() => document.getElementById("fileInput").click()}
+                >
+                  <input
+                    type="file"
+                    id="fileInput"
+                    accept="application/pdf,image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    onChange={(e) => handleFileSelect(e.target.files[0])}
+                  />
+
+                  <div className="pointer-events-none flex flex-row items-center gap-3">
+                    <div className={`p-3 rounded-full transition-all duration-300 ${dragActive ? "bg-teal-500/20 text-teal-300 scale-110" : "bg-gray-800/80 text-gray-400 group-hover:bg-teal-500/10 group-hover:text-teal-400"}`}>
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                      </svg>
+                    </div>
+                    <div className="text-left">
+                      <p className="text-sm font-semibold text-gray-200">
+                        {isDesktop ? "Drag & drop your file here" : "Choose a file to upload"}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        PDF, JPEG, PNG, WEBP — max 10 MB
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="w-full flex items-center justify-between gap-4 p-4 bg-gray-900/60 rounded-2xl border border-gray-700/50 shadow-inner">
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    {/* File Type Badge Icon */}
+                    <div className="relative w-14 h-14 flex-shrink-0 bg-gray-800 rounded-xl flex items-center justify-center overflow-hidden border border-gray-700/40">
+                      {file.type.startsWith("image/") && preview ? (
+                        <Image
+                          src={preview}
+                          alt="Preview"
+                          width={56}
+                          height={56}
+                          className="w-full h-full object-cover"
+                          unoptimized={preview.startsWith("blob:")}
+                        />
+                      ) : file.type === "application/pdf" ? (
+                        <div className="flex flex-col items-center justify-center text-red-400">
+                          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                          </svg>
+                          <span className="text-[9px] font-extrabold tracking-wider uppercase -mt-0.5">PDF</span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center text-teal-400">
+                          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          <span className="text-[9px] font-extrabold tracking-wider uppercase -mt-0.5">FILE</span>
+                        </div>
+                      )}
+                    </div>
+                    {/* File Info */}
+                    <div className="text-left min-w-0">
+                      <p className="text-sm font-semibold text-white truncate max-w-[180px] sm:max-w-[220px]" title={file.name}>
+                        {file.name}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-0.5 font-medium">
+                        {(file.size / (1024 * 1024)).toFixed(2)} MB • {file.type.split("/")[1]?.toUpperCase() || "Unknown"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Remove button */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setFile(null);
+                      if (preview?.startsWith("blob:")) URL.revokeObjectURL(preview);
+                      setPreview(null);
+                    }}
+                    className="p-2.5 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all duration-200 cursor-pointer border border-transparent hover:border-red-500/20"
+                    title="Remove file"
+                  >
+                    <svg className="w-5.5 h-5.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Submit */}
+            <button
+              type="submit"
+              className={`w-full py-2 rounded-xl font-bold flex items-center justify-center gap-2 transition text-white shadow-lg cursor-pointer transform hover:-translate-y-0.5
+                ${loading
+                  ? "bg-gray-700 text-gray-500 cursor-not-allowed"
+                  : "bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 hover:shadow-teal-500/20 shadow-teal-500/10"
+                }`}
+              disabled={loading}
+            >
+              {loading && (
+                <svg
+                  className="animate-spin h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                </svg>
+              )}
+              {loading ? "Uploading..." : "Share Note"}
+            </button>
+          </form>
 
           {/* Toast */}
-          <div
-            className={`fixed bottom-8 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded shadow-lg text-white transition-all duration-500 ${toast.show ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-              } ${toast.type === "success" ? "bg-green-500" : "bg-red-500"}`}
-          >
-            {toast.message}
-          </div>
-        </form>
+          {toast.show && (
+            <div
+              className="fixed top-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-2xl border bg-gray-900/90 backdrop-blur-md text-white animate-slideInRight max-w-sm"
+              style={{
+                borderColor: toast.type === "success" ? "rgba(16, 185, 129, 0.4)" : "rgba(239, 68, 68, 0.4)",
+                boxShadow: toast.type === "success" ? "0 10px 25px -5px rgba(16, 185, 129, 0.2)" : "0 10px 25px -5px rgba(239, 68, 68, 0.2)"
+              }}
+            >
+              <div className={`p-1.5 rounded-lg flex-shrink-0 ${toast.type === "success" ? "bg-emerald-500/20 text-emerald-400" : "bg-red-500/20 text-red-400"}`}>
+                {toast.type === "success" ? (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                )}
+              </div>
+              <span className="text-sm font-semibold">{toast.message}</span>
+            </div>
+          )}
+        </div>
       </div>
     </DashboardLayout>
   );

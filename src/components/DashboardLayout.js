@@ -64,7 +64,7 @@ export default function DashboardLayout({ children }) {
   if (!session) return null;
 
   return (
-    <div className="flex min-h-screen bg-gray-900 text-gray-100">
+    <div className="flex h-screen overflow-hidden bg-gray-900 text-gray-100">
       {/* Sidebar */}
       <aside className="bg-gray-950 text-white flex md:flex-col flex-row md:w-16 w-full fixed md:top-0 bottom-0 md:left-0 left-0 z-50 md:h-screen h-16 md:py-6 py-2 md:space-y-6 space-x-6 md:space-x-0 justify-around md:justify-start items-center">
         {sidebarItems.map((item, index) => (
@@ -105,7 +105,7 @@ export default function DashboardLayout({ children }) {
               md:px-8 px-4  
               md:pt-8 pt-2 
               md:pb-0 pb-12
-              overflow-x-hidden
+              h-full overflow-y-auto overflow-x-hidden
             "
         key={router.asPath}
       >
